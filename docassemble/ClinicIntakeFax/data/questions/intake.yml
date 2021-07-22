@@ -13,14 +13,11 @@ objects:
 ---
 question: |
   Select your clinic
-fields:
-  - no label: doc_select
-    datatype: checkboxes
-    choices:
-      - Juvenile Defenders: jdc_student
-      - Defenders: defenders_student
-      - Accelerator to Practice: a2p_student
-    none of the above: False
+field: doc_select
+choices:
+  - Juvenile Defenders: jdc_student
+  - Defenders: defenders_student
+  - Accelerator to Practice: a2p_student
 ---
 include:
   - docassemble.AssemblyLine:al_package.yml
@@ -124,7 +121,21 @@ code: |
   studentattorney.signature
   supervisor.signature
   what_next
-  exit_screen
+  if what_next == 'Manage forms':
+    intake_finished
+  if what_next == 'Fax HIPAA release to hospital':
+    send_fax
+  if what_next == 'Exit':
+    exit_screen
+  if send_fax:
+    fax_app
+    advise_client
+    hospital.name
+    fax_from
+    got_result
+    all_done
+    display_fax_results
+    what_next
   #JDC_HIPAA_Improved_download
 ---
 id: Main intro screen
@@ -175,9 +186,8 @@ question: |
 subquestion: |
  Fax **${ client.name }'s** HIPAA release form to the hospital.
 
-
 fields:
-  - "Do you need to send a fax?": use_fax
+  - "Do you need to send a fax?": send_fax
     datatype: yesnoradio
     required: false
 continue button field: fax_app
@@ -186,7 +196,7 @@ under: |
 ---
 intitial: True
 code: |
-if use_fax:
+if send_fax:
   fax_app
     advise_client
     hospital.name
@@ -200,8 +210,8 @@ id: Student Attorney
 question: |
   Student Attorney Information
 fields:
-  - Student Attorney First Name: studentattorney.name.first
-  - Student Attorney Last Name: studentattorney.name.last
+  - First Name: studentattorney.name.first
+  - Last Name: studentattorney.name.last
 ---
 objects:
   - studentattorney: Individual
@@ -223,7 +233,7 @@ fields:
   - First Name: client.name.first
   - Last Name: client.name.last
   - Client Birthday: client.dob
-    datatype: date
+    datatype: birthdate
 ---
 #mandatory: True
 #code: |
@@ -247,6 +257,7 @@ fields:
   - First Name: supervisor.name.first
   - Last Name: supervisor.name.last
   - Email: supervisor.email
+    datatype: email
 continue button field: supervisor_info
 ---
 id: Legal Guardian information
@@ -443,8 +454,8 @@ subquestion: |
 fields:
       - Client address: client.address.street
       - Client city: client.address.city
-      - Client zip: client.address.zip
       - Client state: client.address.state
+      - Client zip: client.address.zip
 # created github issue to add address autofil
 ---
 id: docket number
@@ -602,7 +613,7 @@ subquestion: |
 
   ${Notice_of_Appearance_and_Disclosure_attachment}
 continue button field: intake_finished
-continue button label: Get my forms
+continue button label: Fax HIPPA  
 ---
 id: use forms
 question: |
@@ -621,9 +632,9 @@ subquestion: |
   Your intake forms are ready. What do you want to do?
 field: what_next
 choices:
-  - Manage forms
-  - Fax HIPAA release to hospital
-  - Exit
+  - Manage forms: Manage forms
+  - Fax HIPAA release to hospital: Fax HIPAA release to hospital
+  - Exit: Exit
 under: |
   Note: You can log back in to send your forms using this app.
 ---
@@ -631,9 +642,9 @@ initial: True
 code: |
   if what_next == 'Manage forms':
     intake_finished
-  if what_next == 'Fax HIPAA release':
-    use_fax
-  if what_next == 'Exit application':
+  if what_next == 'Fax HIPAA release to hospital':
+    send_fax
+  if what_next == 'Exit':
     exit_screen
 ---
 id: exit screen
