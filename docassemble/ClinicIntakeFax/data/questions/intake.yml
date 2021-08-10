@@ -1,16 +1,20 @@
 ---
+include:
+  - docassemble.AssemblyLine:al_package.yml
+  - docassemble.MassAccess:massaccess.yml
+---
 objects:
   - doc_type: DAList
-  - studentattorney: Individual
-  - client: Individual
-  - parent: Individual
+  - studentattorney: ALPeopleList.using( target_number=1, ask_number=True )
+  - client: ALPeopleList.using( target_number=1, ask_number=True )
+  - parent: ALPeopleList.using( target_number=1, ask_number=True )
   - hospital: DAObject
   - fax: Individual
-  - supervisor: Individual
+  - supervisor: ALPeopleList.using( target_number=1, ask_number=True )
   - court: DAObject
   - defender: DAObject
   - accelerator: DAObject
-  - parents: ALPeopleList.using(ask_number=True,target_number=1)
+  #- parents: ALPeopleList.using(ask_number=True,target_number=1)
   - users: ALPeopleList
 ---
 question: |
@@ -20,10 +24,6 @@ choices:
   - Juvenile Defenders: jdc_student
   - Defenders: defenders_student
   - Accelerator to Practice: a2p_student
----
-include:
-  - docassemble.AssemblyLine:al_package.yml
-  - docassemble.MassAccess:massaccess.yml
 ---
 metadata:
   title: |
@@ -98,12 +98,16 @@ code: |
   JDC_HIPAA_Improved_intro
   doc_select
   signature_date
-  studentattorney.name.first
-  supervisor.name.first
-  client.name.first
-  client_address
+  studentattorney.gather()
+  supervisor.gather()
+  client.gather()
+  client[0].address.address
+
+  #supervisor.name.first
+  #client.name.first
+  #client_address
   if doc_select == 'jdc_student':
-    parent.name.first
+      parent.gather()
   docket_number
   if doc_select == 'jdc_student':
     school_discipline_case
@@ -182,35 +186,95 @@ id: Suffolk University HIPAA App
 question: |
   ##Suffolk University Law School Electronic Fax Machine
 subquestion: |
- Fax **${ client.name }'s** HIPAA release form to the hospital.
+ Fax **${ client[0].name }'s** HIPAA release form to the hospital.
 
 continue button field: fax_app
 under: |
   **Attention:** Student Attorneys are responsible for protecting client information at all times. Suffolk University Law School is not liable for any misuse of this application and releases all liability to any claims that may arise from using this tool.
 ---
-id: Student Attorney
+#id: Student Attorney
+#question: |
+#  Student attorney information
+#fields:
+#  - First Name: studentattorney.name.first
+#  - Last Name: studentattorney.name.last
+---
+id: student attorney name 
+sets:
+  - studentattorney[0].name.first
+  - studentattorney[0].name.last
+generic object: ALPeopleList
 question: |
-  Student attorney information
+  Name of the student attorney
 fields:
-  - First Name: studentattorney.name.first
-  - Last Name: studentattorney.name.last
+  - code: |
+      studentattorney[0].name_fields()
+---
+id: supervisor name 
+sets:
+  - supervisor[0].name.first
+  - supervisor[0].name.last
+  - supervisor[0].email
+generic object: ALPeopleList
+question: |
+  Information of the student's supervising attorney 
+fields:
+  - code: |
+      supervisor[0].name_fields()
+  - Email address: supervisor[0].email
+    datatype: email
+    required: false
+---
+id: client information 
+sets:
+  - client[0].name.first
+  - client[0].name.last
+generic object: ALPeopleList
+question: |
+  Client information
+fields:
+  - code: |
+      client[0].name_fields()
+  - Birthdate: client.dob
+    datatype: birthdate
+---
+id: legal gaurdian 
+sets:
+  - parent[0].name.first
+  - parent[0].name.last
+generic object: ALPeopleList
+question: |
+  Client's legal guardian name
+fields:
+  - code: |
+      parent[0].name_fields()
 ---
 id: end of representation
 question: |
   Effective dates of HIPAA release
 subquestion: |
-  **Advise ${client.name}** this form is valid through the end of The Clinic's representation of them.
+  **Advise ${client[0].name}** this form is valid through the end of The Clinic's representation of them.
 mandatory: True
 field: advise_client
 ---
-id: Client info
+id:  Hospital Information
 question: |
-  Client's information
+  Hospital Information
 fields:
-  - First Name: client.name.first
-  - Last Name: client.name.last
-  - Client Birthday: client.dob
-    datatype: birthdate
+  - Name of Hospital/Medical Institution: hospital.name
+  - Street: hospital.street
+  - City: hospital.city
+  - Zip Code: hospital.zip
+  - Hospital fax number: hospital.fax
+---
+#id: Client info
+#question: |
+#  Client's information
+#fields:
+#  - First Name: client.name.first
+#  - Last Name: client.name.last
+#  - Client Birthday: client.dob
+#    datatype: birthdate
 ---
 #mandatory: True
 #code: |
@@ -225,25 +289,25 @@ buttons:
   - Sign in: signin
 sets: sign_in_page
 ---
-id: supervisor info
-question: |
-  Supervisor information
-subquestion: |
-  Provide the following:
-fields:
-  - First Name: supervisor.name.first
-  - Last Name: supervisor.name.last
-  - Email: supervisor.email
-    datatype: email
-continue button field: supervisor_info
+#id: supervisor info
+#question: |
+#  Supervisor information
+#subquestion: |
+#  Provide the following:
+#fields:
+#  - First Name: supervisor.name.first
+#  - Last Name: supervisor.name.last
+#  - Email: supervisor.email
+#    datatype: email
+#continue button field: supervisor_info
 ---
-id: Legal Guardian information
-question: |
-  Legal guardian information
-fields:
-  - First name: parent.name.first
-  - Last name: parent.name.last
-continue button field: guardian_info
+#id: Legal Guardian information
+#question: |
+#  Legal guardian information
+#fields:
+#  - First name: parent.name.first
+#  - Last name: parent.name.last
+#continue button field: guardian_info
 ---
 #id: preview JDC_HIPAA_Improved
 #question: |
@@ -263,34 +327,34 @@ continue button field: guardian_info
 ---
 id: supervisor signature
 question: |
-  ${ supervisor.name }, please sign below
+  ${ supervisor[0].name }, please sign below
 subquestion: |
-  **${ studentattorney.name }** is sending you intake forms to sign in the matter of **${ client.name }**
+  **${ studentattorney[0].name }** is sending you intake forms to sign in the matter of **${ client[0].name }**
 signature: supervisor.signature
 under: |
-  ${ supervisor.name }
+  ${ supervisor[0].name }
 ---
 id: student signature
 question: |
-  Sign your forms
+  ${ studentattorney[0].name.first }, sign your forms
 signature: studentattorney.signature
 under: |
-  ${ studentattorney.name }
+  ${ studentattorney[0].name }
 ---
 id: client signature
 question: |
-  ${ client.name.first }, sign below
+  ${ client[0].name.first }, sign below
 signature: client.signature
 under: |
-  ${ client.name }
+  ${ client[0].name }
 continue button field: parent_preview
 ---
 id: parent signature
 question: |
-  ${ parent.name.first }, sign below
+  ${ parent[0].name.first }, sign below
 signature: parent.signature
 under: |
-  ${ parent.name }
+  ${ parent[0].name }
 ---
 #id: JDC HIPAA Improved review screen
 #event: review_JDC_HIPAA_Improved
@@ -373,7 +437,7 @@ attachment:
   pdf template file: Fax_cover_sheet.pdf
   fields:
       - "hospital.name": ${ hospital.name }
-      - "studentattorney.name": ${ studentattorney.name }
+      - "studentattorney.name": ${ studentattorney[0].name }
       - "hospital.fax": ${ hospital.fax }
       - "fax_from": ${ 18332979197 }
       - "fax_phone": ${ fax_phone }
@@ -422,7 +486,7 @@ question: |
 subquestion: |
   *I understand that my counsel is a law student enrolled in the Juvenile Defenders Clinic, and further understand that another attorney will be appointed to me instead if I so desire.
   
-  I authorize ${ studentattorney.name } and any successor student attorneys of the Suffolk University Law School Clinical Programs to represent me in the above-entitled case.*
+  I authorize ${ studentattorney } and any successor student attorneys of the Suffolk University Law School Clinical Programs to represent me in the above-entitled case.*
 continue button field: showed_disclosure
 fields:
   - To continue, acknowledge client recieved disclosure: acknowledged_disclosure
@@ -436,17 +500,17 @@ fields:
         You cannot continue unless you acknowledge your client has acknowledged this disclousre
 ---
 id: client address
-continue button field: client_address
+generic object: ALIndividual
+sets:
+  - client[0].address.address
+  - client[0].address.city
+  - client[0].address.zip
 question: |
-  Client Address
-subquestion: |
-  Provide the following
+  What is ${ client[0] }'s address?
 fields:
-      - Client address: client.address.street
-      - Client city: client.address.city
-      - Client zip: client.address.zip
-      - Client state: client.address.state
-# created github issue to add address autofil
+  - code: |
+      client[0].address_fields()
+      
 ---
 id: docket number
 continue button field: docket_number
@@ -541,7 +605,7 @@ code: |
   pdf_url = JDC_HIPAA_Improved_attachment.url_for(temporary=True, seconds=90, attachment=True)
 ---
 id: fax endscreen
-reload: 5
+reload: 15
 question: |
   This is the end screen.
 subquestion: |
@@ -562,16 +626,6 @@ action buttons:
     action: logout
     color: warning
 ---
-id:  Hospital Information
-question: |
-  Hospital Information
-fields:
-  - Name of Hospital/Medical Institution: hospital.name
-  - Street: hospital.street
-  - City: hospital.city
-  - Zip Code: hospital.zip
-  - Hospital fax number: hospital.fax
----
 code: |
   hospital_fax_formatted = phone_number_in_e164(hospital.fax)
 ---
@@ -582,16 +636,15 @@ id: send fax
 question: |
   **WARNING:** You are about to send a fax.
 subquestion: |
-  # Your fax will be sent to ${hospital.name} at *${hospital.fax}*
+  Your fax will be sent to ${hospital.name} at ${hospital.fax}
 
   Click on the attached file and review the accuracy of all information before proceeding.
 
-  Click **Send fax** to fax ${client.name}'s HIPAA Release to ${hospital.name}
+  Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital.name}
 
   ${fax_package}
 field: got_result
 continue button label: Send fax
-
 ---
 id: intake forms complete
 mandatory: True
