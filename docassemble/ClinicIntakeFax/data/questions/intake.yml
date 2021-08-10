@@ -10,6 +10,8 @@ objects:
   - court: DAObject
   - defender: DAObject
   - accelerator: DAObject
+  - parents: ALPeopleList.using(ask_number=True,target_number=1)
+  - users: ALPeopleList
 ---
 question: |
   Select your clinic
@@ -33,10 +35,6 @@ metadata:
 ---
 code: |
   al_form_type = 'existing_case'
----
-objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[Authorization_For_Representation_attachment], filename="Authorization_For_Representation.pdf", title="All forms to download for your records")
-  - al_court_bundle: ALDocumentBundle.using(elements=[Authorization_For_Representation_attachment], filename="Authorization_For_Representation.pdf", title="All forms to download for your records")
 ---
 mandatory: True
 comment: |
@@ -69,10 +67,6 @@ code: |
 ---
 code: |
   al_form_type = 'other_form'
----
-objects:
-  - parents: ALPeopleList.using(ask_number=True,target_number=1)
-  - users: ALPeopleList
 ---
 sections:
   - review_JDC_HIPAA_Improved: Review your answers
@@ -108,34 +102,37 @@ code: |
   supervisor.name.first
   client.name.first
   client_address
+  if doc_select == 'jdc_student':
+    parent.name.first
   docket_number
-  school_discipline_case
+  if doc_select == 'jdc_student':
+    school_discipline_case
   showed_disclosure
-  parent.name.first
   # Save anonymized interview statistics (customize the saved data below)
   store_variables_snapshot(data={'zip': users[0].address.zip})
   #JDC_HIPAA_Improved_preview_question
   basic_questions_signature_flow = False
   parent_preview
-  parent.signature
+  if doc_select == 'jdc_student':
+    parent.signature
   studentattorney.signature
   supervisor.signature
-  what_next
   if what_next == 'Manage forms':
     intake_finished
-  if what_next == 'Fax HIPAA release to hospital':
-    send_fax
-  if what_next == 'Exit':
-    exit_screen
-  if send_fax:
+    undefine('what_next')
+    what_next
+  elif what_next == 'Fax HIPAA release to hospital':
     fax_app
     advise_client
     hospital.name
-    fax_from
+    fax_phone
     got_result
     all_done
-    display_fax_results
+    #display_fax_results
     what_next
+  elif what_next == 'Exit':
+    exit_screen
+  
   #JDC_HIPAA_Improved_download
 ---
 id: Main intro screen
@@ -148,7 +145,9 @@ subquestion: |
   The Court Forms Online Project can help you complete and fax your client's HIPAA form in 3 steps:
 
   Step 1. Answer questions that will fill in the form for you.
+  
   Step 2. Preview the completed form.
+  
   Step 3. Fax the forms to the hospital using this secure website and save copies
   for yourself for later reference.
 
@@ -181,54 +180,32 @@ right: |
 ---
 id: Suffolk University HIPAA App
 question: |
-  ##Suffolk University Law School
-              Electronic Fax Machine
+  ##Suffolk University Law School Electronic Fax Machine
 subquestion: |
  Fax **${ client.name }'s** HIPAA release form to the hospital.
 
-fields:
-  - "Do you need to send a fax?": send_fax
-    datatype: yesnoradio
-    required: false
 continue button field: fax_app
 under: |
   **Attention:** Student Attorneys are responsible for protecting client information at all times. Suffolk University Law School is not liable for any misuse of this application and releases all liability to any claims that may arise from using this tool.
 ---
-intitial: True
-code: |
-if send_fax:
-  fax_app
-    advise_client
-    hospital.name
-    fax_from
-    got_result
-    all_done
-    display_fax_results
-    what_next
----
 id: Student Attorney
 question: |
-  Student Attorney Information
+  Student attorney information
 fields:
   - First Name: studentattorney.name.first
   - Last Name: studentattorney.name.last
----
-objects:
-  - studentattorney: Individual
 ---
 id: end of representation
 question: |
   Effective dates of HIPAA release
 subquestion: |
-  *Advise ${client.name}* this form is valid through the end of The Clinic's representation of them.
+  **Advise ${client.name}** this form is valid through the end of The Clinic's representation of them.
 mandatory: True
 field: advise_client
 ---
 id: Client info
 question: |
-  Client Information
-subquestion: |
-  Provide the following:
+  Client's information
 fields:
   - First Name: client.name.first
   - Last Name: client.name.last
@@ -262,9 +239,7 @@ continue button field: supervisor_info
 ---
 id: Legal Guardian information
 question: |
-  Legal Guardian Information
-subquestion: |
-  Provide the following:
+  Legal guardian information
 fields:
   - First name: parent.name.first
   - Last name: parent.name.last
@@ -288,9 +263,9 @@ continue button field: guardian_info
 ---
 id: supervisor signature
 question: |
-  Intake forms for your signature
+  ${ supervisor.name }, please sign below
 subquestion: |
-  **${ studentattorney.name }** is sending you intake forms to sign, in the matter of **${ client.name }**
+  **${ studentattorney.name }** is sending you intake forms to sign in the matter of **${ client.name }**
 signature: supervisor.signature
 under: |
   ${ supervisor.name }
@@ -304,7 +279,7 @@ under: |
 ---
 id: client signature
 question: |
-  ${ client.name.first }, sign below.
+  ${ client.name.first }, sign below
 signature: client.signature
 under: |
   ${ client.name }
@@ -312,32 +287,32 @@ continue button field: parent_preview
 ---
 id: parent signature
 question: |
-  Please have ${ parent.name.first } sign their name below.
+  ${ parent.name.first }, sign below
 signature: parent.signature
 under: |
   ${ parent.name }
 ---
-id: JDC HIPAA Improved review screen
-event: review_JDC_HIPAA_Improved
-question: |
-  Review your answers
-review:
-  - Edit: client.name
-    button: |
-      **Client name full**:
-      ${ client.name }
-  - Edit: client.dob
-    button: |
-      **Client dob**:
-      ${ client.dob }
-  - Edit: todays.date
-    button: |
-      **Date of todays**:
-      ${ todays.date }
-  - Edit: client.signature
-    button: |
-      **Client Signature**:
-      ${ client.signature }
+#id: JDC HIPAA Improved review screen
+#event: review_JDC_HIPAA_Improved
+#question: |
+#  Review your answers
+#review:
+#  - Edit: client.name
+#    button: |
+#      **Client name full**:
+#      ${ client.name }
+#  - Edit: client.dob
+#    button: |
+#      **Client dob**:
+#      ${ client.dob }
+#  - Edit: todays.date
+#    button: |
+#      **Date of todays**:
+#      ${ todays.date }
+#  - Edit: client.signature
+#    button: |
+#      **Client Signature**:
+#      ${ client.signature }
 ---
 #id: download JDC_HIPAA_Improved
 #event: JDC_HIPAA_Improved_download
@@ -359,27 +334,40 @@ review:
 #progress: 90
 ---
 objects:
-  - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)
+  - al_user_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
+  - al_court_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
+  - JDC_fax: DAStaticFile.using(filename='data/templates/JDC_HIPAA_Improved.pdf') 
+  #creates a url for the completed form to "live", and then this
+  - fax_package: ALDocumentBundle.using(elements=[Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment], filename="fax_package.pdf")
 ---
-objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
-  - al_court_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
+#code: |
+#    fax_package = pdf_concatenate(Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment, filename="fax_package.pdf")
+---
+comment: |
+  - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)
 ---
 id:  Fax cover sheet data
 question: |
   Fax Cover Sheet
 subquestion: |
-  The information below will be included on the cover sheet of your fax to the hopsital
+  The information below will be included on the cover sheet of your fax to the hospital
 fields:
-  - From fax number: fax_from
   - From phone number: fax_phone
   - Fax subject: fax_subject
   - Fax comment: fax_comment
 ---
+mandatory: True 
+question: |
+  This interview is all done. 
+subquestion: | 
+  To complete submission, [fax your HIPPA form]to the hospital.
+  [fax your HIPPA form]: ${ JDC_HIPAA_Improved_attachment.url_for(temporary=True) }
+attachment code: JDC_HIPAA_Improved_attachment
+---
 id: Fax cover sheet attachment
 attachment:
-  variable name: Fax_cover_sheet_attachment
   name: Fax_cover_sheet_attachment
+  variable name: Fax_cover_sheet_attachment
   filename: Fax_cover_sheet
   skip undefined: True
   pdf template file: Fax_cover_sheet.pdf
@@ -387,7 +375,7 @@ attachment:
       - "hospital.name": ${ hospital.name }
       - "studentattorney.name": ${ studentattorney.name }
       - "hospital.fax": ${ hospital.fax }
-      - "fax_from": ${ fax_from }
+      - "fax_from": ${ 18332979197 }
       - "fax_phone": ${ fax_phone }
       - "hospital.phone": ${ hospital.phone }
       - "todays.date": ${ today() }
@@ -395,10 +383,11 @@ attachment:
       - "fax_comment": ${ fax_comment }
 # on cover sheet make from_fax the clinic's fax number
 ---
+id: JDC attachment
 attachment:
-  variable name: JDC_HIPAA_Improved_attachment
-  name: JDC_HIPAA_Improved_attachment
+  name: Juvenile Defenders Clinic HIPPA 
   filename: JDC_HIPAA_Improved
+  variable name: JDC_HIPAA_Improved_attachment
   skip undefined: True
   pdf template file: JDC_HIPAA_Improved.pdf
   fields:
@@ -426,13 +415,14 @@ attachment:
       - "client.signature": ${ client.signature }
       - "studentattorney.signature": ${ studentattorney.signature }
       - "supervisor.signature": ${ supervisor.signature }
-
 ---
 id: Appearance Disclosure
 question: |
  **S.J.C. RULE 3:03 DISCLOSURE**
 subquestion: |
-  *I understand that my counsel is a law student enrolled in the Juvenile Defenders Clinic, and further understand that another attorney will be appointed to me instead if I so desire. I authorize ${ studentattorney.name } and any successor student attorneys of the Suffolk University Law School Clinical Programs to represent me in the above-entitled case.*
+  *I understand that my counsel is a law student enrolled in the Juvenile Defenders Clinic, and further understand that another attorney will be appointed to me instead if I so desire.
+  
+  I authorize ${ studentattorney.name } and any successor student attorneys of the Suffolk University Law School Clinical Programs to represent me in the above-entitled case.*
 continue button field: showed_disclosure
 fields:
   - To continue, acknowledge client recieved disclosure: acknowledged_disclosure
@@ -454,16 +444,14 @@ subquestion: |
 fields:
       - Client address: client.address.street
       - Client city: client.address.city
-      - Client state: client.address.state
       - Client zip: client.address.zip
+      - Client state: client.address.state
 # created github issue to add address autofil
 ---
 id: docket number
 continue button field: docket_number
 question: |
-  Docket Number
-subquestion: |
-  Provide the following
+  Docket number
 fields:
   - Docket Number: docket_one
   - "Do you represent your client in more than one matter?": more_than_one
@@ -486,9 +474,9 @@ fields:
 continue button field: school_discipline_case
 id: school discipline
 question: |
-  School case?
+  Will you be representing your client in a school discipline case?
 fields:
-  - "Will you be representing your client in a school discipline case?": has_school_case
+  - no label: has_school_case
     datatype: yesnoradio
     required: false
   - Case number: school_case
@@ -531,10 +519,11 @@ objects:
   - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
 ---
 code: |
-  data = {'media_url': "https://apps-dev.suffolklitlab.org/data/templates/JDC_HIPAA_Improved.pdf ",
+  data = {'media_url': pdf_url,
     'connection_id': '1584353915762115606',
     'to': hospital_fax_formatted,
-    'from': '+18332979197'}
+    'from': '+18332979197'
+      }
   headers = {'Authorization': 'Bearer KEY0177F9770F9DA6B296C4098DDA8A8B99_EksqAtVPNAEp4XGMflLPuT',
              'Content-Type': 'application/x-www-form-urlencoded'
              }
@@ -547,6 +536,9 @@ code: |
   except DAWebError as e:
     result = e.response_json
   got_result = True
+---
+code: | 
+  pdf_url = JDC_HIPAA_Improved_attachment.url_for(temporary=True, seconds=90, attachment=True)
 ---
 id: fax endscreen
 reload: 5
@@ -561,11 +553,14 @@ subquestion: |
 # add button to download the fax that was sent, alternatively - send student attorney an email copy of the fax package- needs to have a screen that tell user what was done with their fax-generate a follow up email with all forms generated
 
 #make sending email conditional upon recieving feedback from the API
-
-buttons:
-  - Logout: logout
-  - Continue using app: what_next
-event: all_done
+field: all_done
+action buttons:
+  - label: Options menu
+    action: what_next
+    color: success
+  - label: Logout
+    action: logout
+    color: warning
 ---
 id:  Hospital Information
 question: |
@@ -583,22 +578,20 @@ code: |
 code: |
   country: US
 ---
+id: send fax
 question: |
   **WARNING:** You are about to send a fax.
 subquestion: |
-  # Your fax will be sent to ${hospital.name} at fax number:
-  *${hospital.fax}*
+  # Your fax will be sent to ${hospital.name} at *${hospital.fax}*
 
   Click on the attached file and review the accuracy of all information before proceeding.
 
-  Click **SEND FAX** to fax ${client.name}'s HIPAA Release to ${hospital.name}
+  Click **Send fax** to fax ${client.name}'s HIPAA Release to ${hospital.name}
 
   ${fax_package}
 field: got_result
-continue button label: SEND FAX
----
-code: |
-    fax_package = pdf_concatenate(Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment, filename="fax_package.pdf")
+continue button label: Send fax
+
 ---
 id: intake forms complete
 mandatory: True
@@ -638,14 +631,14 @@ choices:
 under: |
   Note: You can log back in to send your forms using this app.
 ---
-initial: True
-code: |
-  if what_next == 'Manage forms':
-    intake_finished
-  if what_next == 'Fax HIPAA release to hospital':
-    send_fax
-  if what_next == 'Exit':
-    exit_screen
+#initial: True
+#code: |
+#  if what_next == 'Manage forms':
+#    intake_finished
+#  if what_next == 'Fax HIPAA release to hospital':
+#    send_fax
+#  if what_next == 'Exit':
+#    exit_screen
 ---
 id: exit screen
 question: |
