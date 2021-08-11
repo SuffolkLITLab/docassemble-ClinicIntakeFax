@@ -8,7 +8,7 @@ objects:
   - studentattorney: ALPeopleList.using( target_number=1, ask_number=True )
   - client: ALPeopleList.using( target_number=1, ask_number=True )
   - parent: ALPeopleList.using( target_number=1, ask_number=True )
-  - hospital: DAObject
+  - hospital: ALIndividual
   - fax: Individual
   - supervisor: ALPeopleList.using( target_number=1, ask_number=True )
   - court: DAObject
@@ -128,7 +128,7 @@ code: |
   elif what_next == 'Fax HIPAA release to hospital':
     fax_app
     advise_client
-    hospital.name
+    hospital.name.first
     fax_phone
     got_result
     all_done
@@ -257,15 +257,14 @@ subquestion: |
 mandatory: True
 field: advise_client
 ---
-id:  Hospital Information
+id: Hospital Information
 question: |
   Hospital Information
 fields:
-  - Name of Hospital/Medical Institution: hospital.name
-  - Street: hospital.street
-  - City: hospital.city
-  - Zip Code: hospital.zip
+  - Name of Hospital/Medical Institution: hospital.name.first
   - Hospital fax number: hospital.fax
+  - code: | 
+      hospital.address_fields()
 ---
 #id: Client info
 #question: |
