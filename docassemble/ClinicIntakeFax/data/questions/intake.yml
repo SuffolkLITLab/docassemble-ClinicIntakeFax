@@ -399,7 +399,7 @@ under: |
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
   - al_court_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
-  - JDC_fax: DAStaticFile.using(filename='data/templates/JDC_HIPAA_Improved.pdf') 
+  #- JDC_fax: DAStaticFile.using(filename='data/templates/JDC_HIPAA_Improved.pdf') 
   #creates a url for the completed form to "live", and then this
   - fax_package: ALDocumentBundle.using(elements=[Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment], filename="fax_package.pdf")
 ---
@@ -426,58 +426,6 @@ subquestion: |
   To complete submission, [fax your HIPPA form]to the hospital.
   [fax your HIPPA form]: ${ JDC_HIPAA_Improved_attachment.url_for(temporary=True) }
 attachment code: JDC_HIPAA_Improved_attachment
----
-id: Fax cover sheet attachment
-attachment:
-  name: Fax_cover_sheet_attachment
-  variable name: Fax_cover_sheet_attachment
-  filename: Fax_cover_sheet
-  skip undefined: True
-  pdf template file: Fax_cover_sheet.pdf
-  fields:
-      - "hospital.name": ${ hospital.name }
-      - "studentattorney.name": ${ studentattorney[0].name }
-      - "hospital.fax": ${ hospital.fax }
-      - "fax_from": ${ 18332979197 }
-      - "fax_phone": ${ fax_phone }
-      - "hospital.phone": ${ hospital.phone }
-      - "todays.date": ${ today() }
-      - "fax_subject": ${ fax_subject }
-      - "fax_comment": ${ fax_comment }
-# on cover sheet make from_fax the clinic's fax number
----
-id: JDC attachment
-attachment:
-  name: Juvenile Defenders Clinic HIPPA 
-  filename: JDC_HIPAA_Improved
-  variable name: JDC_HIPAA_Improved_attachment
-  skip undefined: True
-  pdf template file: JDC_HIPAA_Improved.pdf
-  fields:
-      - "parent.signature": ${ parent.signature }
-      - "client.name": ${ client.name }
-      - "parent.name": ${ parent.name }
-      - "studentattorney.name": ${ studentattorney.name }
-      - "client.dob": ${ client.dob }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
-      - "client.signature": ${ client.signature }
----
-attachment:
-  variable name: Notice_of_Appearance_and_Disclosure_attachment
-  name: Notice_of_Appearance_and_Disclosure_attachment
-  filename: Notice_of_Appearance_and_Disclosure
-  skip undefined: True
-  pdf template file: Notice_of_Appearance_and_Disclosure.pdf
-  fields:
-      - "client.name": ${ client.name }
-      - "client.name": ${ client.name }
-      - "studentattorney.name": ${ studentattorney.name }
-      - "todays.date": ${ today() }
-      - "client.signature": ${ client.signature }
-      - "studentattorney.signature": ${ studentattorney.signature }
-      - "supervisor.signature": ${ supervisor.signature }
 ---
 id: Appearance Disclosure
 question: |
@@ -601,7 +549,10 @@ code: |
   got_result = True
 ---
 code: | 
-  pdf_url = JDC_HIPAA_Improved_attachment.url_for(temporary=True, seconds=90, attachment=True)
+  pdf_url = pdf_singlefile.url_for(temporary=True, seconds=1000, attachment=True)
+---
+code: 
+  pdf_singlefile = pdf_concatenate(Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment, Notice_of_Appearance_and_Disclosure_attachment)
 ---
 id: fax endscreen
 reload: 15
@@ -706,3 +657,55 @@ event: exit_screen
 #code: |
   #if not user_logged_in():
     #require_login_screen
+---
+id: Fax cover sheet attachment
+attachment:
+  name: Fax_cover_sheet_attachment
+  variable name: Fax_cover_sheet_attachment
+  filename: Fax_cover_sheet
+  skip undefined: True
+  pdf template file: Fax_cover_sheet.pdf
+  fields:
+      - "hospital.name": ${ hospital.name }
+      - "studentattorney.name": ${ studentattorney[0].name }
+      - "hospital.fax": ${ hospital.fax }
+      - "fax_from": ${ 18332979197 }
+      - "fax_phone": ${ fax_phone }
+      - "hospital.phone": ${ hospital.phone }
+      - "todays.date": ${ today() }
+      - "fax_subject": ${ fax_subject }
+      - "fax_comment": ${ fax_comment }
+# on cover sheet make from_fax the clinic's fax number
+---
+id: JDC attachment
+attachment:
+  name: Juvenile Defenders Clinic HIPPA 
+  filename: JDC_HIPAA_Improved
+  variable name: JDC_HIPAA_Improved_attachment
+  skip undefined: True
+  pdf template file: JDC_HIPAA_Improved.pdf
+  fields:
+      - "parent.signature": ${ parent.signature }
+      - "client.name": ${ client.name }
+      - "parent.name": ${ parent.name }
+      - "studentattorney.name": ${ studentattorney.name }
+      - "client.dob": ${ client.dob }
+      - "todays.date": ${ today() }
+      - "todays.date": ${ today() }
+      - "todays.date": ${ today() }
+      - "client.signature": ${ client.signature }
+---
+attachment:
+  variable name: Notice_of_Appearance_and_Disclosure_attachment
+  name: Notice_of_Appearance_and_Disclosure_attachment
+  filename: Notice_of_Appearance_and_Disclosure
+  skip undefined: True
+  pdf template file: Notice_of_Appearance_and_Disclosure.pdf
+  fields:
+      - "client.name": ${ client.name }
+      - "client.name": ${ client.name }
+      - "studentattorney.name": ${ studentattorney.name }
+      - "todays.date": ${ today() }
+      - "client.signature": ${ client.signature }
+      - "studentattorney.signature": ${ studentattorney.signature }
+      - "supervisor.signature": ${ supervisor.signature }
