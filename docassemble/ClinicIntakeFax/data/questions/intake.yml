@@ -525,7 +525,7 @@ code: |
   pdf_url = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
 ---
 code: 
-  file_to_fax = pdf_concatenate(Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment, Notice_of_Appearance_and_Disclosure_attachment)
+  file_to_fax = pdf_concatenate(Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment)
 ---
 reload: 10
 id: fax endscreen
