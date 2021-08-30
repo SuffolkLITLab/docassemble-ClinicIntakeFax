@@ -121,6 +121,8 @@ code: |
     parent.signature
   studentattorney.signature
   supervisor.signature
+  
+  
   if what_next == 'Manage forms':
     intake_finished
     undefine('what_next')
@@ -403,9 +405,6 @@ objects:
   #creates a url for the completed form to "live", and then this
   - fax_package: ALDocumentBundle.using(elements=[Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment], filename="fax_package.pdf")
 ---
-#code: |
-#    fax_package = pdf_concatenate(Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment, filename="fax_package.pdf")
----
 comment: |
   - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)
 ---
@@ -500,8 +499,7 @@ attachment:
   skip undefined: True
   pdf template file: Authorization_For_Representation.pdf
   fields:
-      - "client.name": ${ client.name }
-      - "client.name": ${ client.name }
+      - "client_name": ${ client[0] }
       - "client.address.street": ${ client.address.street }
       - "client.address.city": ${ client.address.city }
       - "client.address.zip": ${ client.address.zip }
@@ -539,7 +537,7 @@ code: |
              'Content-Type': 'application/x-www-form-urlencoded'
              }
   try:
-    result = web.post('faxes',
+    result = web.get('faxes',
                       data=data,
                       headers=headers,
                       json_body=False,
@@ -549,13 +547,13 @@ code: |
   got_result = True
 ---
 code: | 
-  pdf_url = pdf_singlefile.url_for(temporary=True, seconds=1000, attachment=True)
+  pdf_url = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
 ---
 code: 
-  pdf_singlefile = pdf_concatenate(Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment, Notice_of_Appearance_and_Disclosure_attachment)
+  file_to_fax = pdf_concatenate(Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment, Notice_of_Appearance_and_Disclosure_attachment)
 ---
+reload: 10
 id: fax endscreen
-reload: 15
 question: |
   This is the end screen.
 subquestion: |
@@ -566,7 +564,7 @@ subquestion: |
 
 # add button to download the fax that was sent, alternatively - send student attorney an email copy of the fax package- needs to have a screen that tell user what was done with their fax-generate a follow up email with all forms generated
 
-#make sending email conditional upon recieving feedback from the API
+
 field: all_done
 action buttons:
   - label: Options menu
@@ -686,13 +684,11 @@ attachment:
   pdf template file: JDC_HIPAA_Improved.pdf
   fields:
       - "parent.signature": ${ parent.signature }
-      - "client.name": ${ client.name }
-      - "parent.name": ${ parent.name }
-      - "studentattorney.name": ${ studentattorney.name }
-      - "client.dob": ${ client.dob }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
+      - "client_name": ${ client[0].name }
+      - "parent_name": ${ parent[0].name }
+      - "student_attorney": ${ studentattorney[0].name }
+      - "client.dob": ${ client.dob.format() }
+      - "todays.date": ${ today(format='MM/dd/YYYY') }
       - "client.signature": ${ client.signature }
 ---
 attachment:
