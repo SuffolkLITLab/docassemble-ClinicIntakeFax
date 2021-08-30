@@ -492,31 +492,6 @@ fields:
   - Case number: school_case
     show if: has_school_case
 ---
-attachment:
-  variable name: Authorization_For_Representation_attachment
-  name: Authorization_For_Representation_attachment
-  filename: Authorization_For_Representation
-  skip undefined: True
-  pdf template file: Authorization_For_Representation.pdf
-  fields:
-      - "client_name": ${ client[0] }
-      - "client.address.street": ${ client.address.street }
-      - "client.address.city": ${ client.address.city }
-      - "client.address.zip": ${ client.address.zip }
-      - "client.address.state": ${ client.address.state }
-      - "docket_numer_1": ${ docket_numer_one }
-      - "docket_numer_2": ${ docket_numer_two }
-      - "docket_numer_3": ${ docket_numer_three }
-      - "docket_numer_4": ${ docket_numer_four }
-      - "school_case": ${ school_case }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
-      - "studentattorney.signature": ${ studentattorney.signature }
-      - "parent.signature": ${ parent.signature }
-      - "supervisor.signature": ${ supervisor.signature }
----
 metadata:
   sessions are unique: True
   required privileges:
@@ -590,7 +565,7 @@ subquestion: |
 
   Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital.name}
 
-  ${fax_package}
+  ${file_to_fax}
 field: got_result
 continue button label: Send fax
 ---
@@ -665,14 +640,14 @@ attachment:
   pdf template file: Fax_cover_sheet.pdf
   fields:
       - "hospital.name": ${ hospital.name }
-      - "studentattorney.name": ${ studentattorney[0].name }
+      - "student_attorney": ${ studentattorney[0].name }
       - "hospital.fax": ${ hospital.fax }
       - "fax_from": ${ 18332979197 }
       - "fax_phone": ${ fax_phone }
       - "hospital.phone": ${ hospital.phone }
-      - "todays.date": ${ today() }
+      - "todays.date": ${ today(format='MM/dd/YYYY') }
       - "fax_subject": ${ fax_subject }
-      - "fax_comment": ${ fax_comment }
+      - "fax_comment": ${ fax_comment } 
 # on cover sheet make from_fax the clinic's fax number
 ---
 id: JDC attachment
@@ -704,4 +679,29 @@ attachment:
       - "todays.date": ${ today() }
       - "client.signature": ${ client.signature }
       - "studentattorney.signature": ${ studentattorney.signature }
+      - "supervisor.signature": ${ supervisor.signature }
+---
+attachment:
+  variable name: Authorization_For_Representation_attachment
+  name: Authorization_For_Representation_attachment
+  filename: Authorization_For_Representation
+  skip undefined: True
+  pdf template file: Authorization_For_Representation.pdf
+  fields:
+      - "client_name": ${ client[0] }
+      - "client.address.street": ${ client.address.street }
+      - "client.address.city": ${ client.address.city }
+      - "client.address.zip": ${ client.address.zip }
+      - "client.address.state": ${ client.address.state }
+      - "docket_numer_1": ${ docket_numer_one }
+      - "docket_numer_2": ${ docket_numer_two }
+      - "docket_numer_3": ${ docket_numer_three }
+      - "docket_numer_4": ${ docket_numer_four }
+      - "school_case": ${ school_case }
+      - "todays.date": ${ today() }
+      - "todays.date": ${ today() }
+      - "todays.date": ${ today() }
+      - "todays.date": ${ today() }
+      - "studentattorney.signature": ${ studentattorney.signature }
+      - "parent.signature": ${ parent.signature }
       - "supervisor.signature": ${ supervisor.signature }
