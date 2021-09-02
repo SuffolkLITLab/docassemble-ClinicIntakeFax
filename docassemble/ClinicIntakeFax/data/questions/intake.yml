@@ -16,7 +16,9 @@ objects:
   - accelerator: DAObject
   #- parents: ALPeopleList.using(ask_number=True,target_number=1)
   - users: ALPeopleList
+  - docket_numbers: DAList.using(there_are_any=True)
 ---
+id: clinic choice
 question: |
   Select your clinic
 field: doc_select
@@ -96,7 +98,7 @@ comment: |
 mandatory: True
 code: |
   JDC_HIPAA_Improved_intro
-  doc_select
+  doc_select = 'jdc_student'
   signature_date
   studentattorney.gather()
   supervisor.gather()
@@ -108,7 +110,7 @@ code: |
   #client_address
   if doc_select == 'jdc_student':
       parent.gather()
-  docket_number
+  docket_numbers[0]
   if doc_select == 'jdc_student':
     school_discipline_case
   showed_disclosure
@@ -184,15 +186,17 @@ right: |
   ${action_button_html(url_action('load_answer'), icon="folder-open", label=word("View answers"), size="sm" )}
   % endif
 ---
-id: Suffolk University HIPAA App
+id: HIPAA app
+decoration: fax
 question: |
   ##Suffolk University Law School Electronic Fax Machine
 subquestion: |
- Fax **${ client[0].name }'s** HIPAA release form to the hospital.
+
+  **Attention:** Student Attorneys are responsible for protecting client information at all times. Suffolk University Law School is not liable for any misuse of this application and releases all liability to any claims that may arise from using this tool.
 
 continue button field: fax_app
-under: |
-  **Attention:** Student Attorneys are responsible for protecting client information at all times. Suffolk University Law School is not liable for any misuse of this application and releases all liability to any claims that may arise from using this tool.
+continue button label: Begin sending fax
+
 ---
 #id: Student Attorney
 #question: |
@@ -219,13 +223,12 @@ sets:
   - supervisor[0].email
 generic object: ALPeopleList
 question: |
-  Information of the student's supervising attorney 
+  Information of your supervising attorney 
 fields:
   - code: |
       supervisor[0].name_fields()
   - Email address: supervisor[0].email
     datatype: email
-    required: false
 ---
 id: client information 
 sets:
@@ -253,15 +256,15 @@ fields:
 ---
 id: end of representation
 question: |
-  Effective dates of HIPAA release
+  Advise ${client[0].name} the effective dates of the HIPAA release
 subquestion: |
-  **Advise ${client[0].name}** this form is valid through the end of The Clinic's representation of them.
+  This form is valid through the end of the Clinic's representation of them.
 mandatory: True
 field: advise_client
 ---
-id: Hospital Information
+id: hospital information
 question: |
-  Hospital Information
+  Hospital or Medical Institution Information
 fields:
   - Name of Hospital/Medical Institution: hospital.name.first
   - Hospital fax number: hospital.fax
@@ -428,11 +431,13 @@ attachment code: JDC_HIPAA_Improved_attachment
 ---
 id: Appearance Disclosure
 question: |
- **S.J.C. RULE 3:03 DISCLOSURE**
+  ${ client[0].name.first }, read the below disclosure 
 subquestion: |
-  *I understand that my counsel is a law student enrolled in the Juvenile Defenders Clinic, and further understand that another attorney will be appointed to me instead if I so desire.
+  S.J.C. RULE 3:03 DISCLOSURE
   
-  I authorize ${ studentattorney } and any successor student attorneys of the Suffolk University Law School Clinical Programs to represent me in the above-entitled case.*
+  * I understand that my counsel is a law student enrolled in the Juvenile Defenders Clinic, and further understand that another attorney will be appointed to me instead if I so desire.
+
+  * I authorize ${ studentattorney } and any successor student attorneys of the Suffolk University Law School Clinical Programs to represent me in the above-entitled case.*
 continue button field: showed_disclosure
 fields:
   - To continue, acknowledge client recieved disclosure: acknowledged_disclosure
@@ -443,7 +448,7 @@ fields:
       - "**Client recieved disclosure**"
     validation messages:
       minlength: |
-        You cannot continue unless you acknowledge your client has acknowledged this disclousre
+        You cannot continue unless your client has acknowledged this disclousre
 ---
 id: client address
 generic object: ALIndividual
@@ -458,28 +463,20 @@ fields:
       client[0].address_fields()
       
 ---
-id: docket number
-continue button field: docket_number
 question: |
-  Docket number
+  Do you have a docket number for this case?
+yesno: docket_numbers.there_are_any
+---
+id: docket numbers
+question: |
+  What is the docket number for this case?
+subquestion: |
+  If there are multiple docket numbers on this form, you can tap "${word("Add another")}"
+  to add more than one.
+list collect: True
 fields:
-  - Docket Number: docket_one
-  - "Do you represent your client in more than one matter?": more_than_one
-    datatype: yesnoradio
-  - Second Docket Number: docket_two
-    show if: more_than_one
-  - "Do you represent your client in any other matters?": another_one
-    datatype: yesnoradio
-    show if: more_than_one
-    required: false
-  - Third docket number: docket_three
-    show if: another_one
-  - "Do you represent your client in any other matters?": and_another_one
-    datatype: yesnoradio
-    show if: another_one
-    required: false
-  - Fourth docket number: docket_four
-    show if: and_another_one
+  - no label: docket_numbers[i]
+    required: False
 ---
 continue button field: school_discipline_case
 id: school discipline
@@ -512,7 +509,7 @@ code: |
              'Content-Type': 'application/x-www-form-urlencoded'
              }
   try:
-    result = web.get('faxes',
+    result = web.post('faxes',
                       data=data,
                       headers=headers,
                       json_body=False,
@@ -658,13 +655,13 @@ attachment:
   skip undefined: True
   pdf template file: JDC_HIPAA_Improved.pdf
   fields:
-      - "parent.signature": ${ parent.signature }
       - "client_name": ${ client[0].name }
       - "parent_name": ${ parent[0].name }
       - "student_attorney": ${ studentattorney[0].name }
       - "client.dob": ${ client.dob.format() }
       - "todays.date": ${ today(format='MM/dd/YYYY') }
       - "client.signature": ${ client.signature }
+      - "parent.signature": ${ parent.signature }
 ---
 attachment:
   variable name: Notice_of_Appearance_and_Disclosure_attachment
@@ -673,10 +670,9 @@ attachment:
   skip undefined: True
   pdf template file: Notice_of_Appearance_and_Disclosure.pdf
   fields:
-      - "client.name": ${ client.name }
-      - "client.name": ${ client.name }
-      - "studentattorney.name": ${ studentattorney.name }
-      - "todays.date": ${ today() }
+      - "client_name": ${ client[0].name }
+      - "studentattorney.name": ${ studentattorney[0].name }
+      - "todays.date": ${ today(format='MM/dd/YYYY') }
       - "client.signature": ${ client.signature }
       - "studentattorney.signature": ${ studentattorney.signature }
       - "supervisor.signature": ${ supervisor.signature }
@@ -688,20 +684,13 @@ attachment:
   skip undefined: True
   pdf template file: Authorization_For_Representation.pdf
   fields:
-      - "client_name": ${ client[0] }
-      - "client.address.street": ${ client.address.street }
-      - "client.address.city": ${ client.address.city }
-      - "client.address.zip": ${ client.address.zip }
-      - "client.address.state": ${ client.address.state }
-      - "docket_numer_1": ${ docket_numer_one }
-      - "docket_numer_2": ${ docket_numer_two }
-      - "docket_numer_3": ${ docket_numer_three }
-      - "docket_numer_4": ${ docket_numer_four }
+      - "client_name": ${ client[0].name }
+      - "student_attorney": ${ studentattorney[0].name }
+      - "client_address_line_one": ${ client[0].address.line_one() }
+      - "client_address_city_state_zip": ${ client[0].address.line_two()}
+      - "docket_numbers": ${ docket_numbers }
       - "school_case": ${ school_case }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
-      - "todays.date": ${ today() }
+      - "todays.date": ${ today(format='MM/dd/YYYY') }
       - "studentattorney.signature": ${ studentattorney.signature }
       - "parent.signature": ${ parent.signature }
       - "supervisor.signature": ${ supervisor.signature }
