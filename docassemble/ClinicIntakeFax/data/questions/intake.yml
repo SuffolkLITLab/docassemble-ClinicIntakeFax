@@ -134,6 +134,7 @@ code: |
     advise_client
     hospital.name.first
     fax_phone
+    email_sent_ok
     got_result
     all_done
     #display_fax_results
@@ -209,12 +210,15 @@ id: student attorney name
 sets:
   - studentattorney[0].name.first
   - studentattorney[0].name.last
+  - studentattorney[0].email
 generic object: ALPeopleList
 question: |
   Name of the student attorney
 fields:
   - code: |
       studentattorney[0].name_fields()
+  - Email address: studentattorney[0].email
+    datatype: email
 ---
 id: supervisor name 
 sets:
@@ -622,6 +626,21 @@ buttons:
   - Logout: logout
   - Fax HIPAA form: use_fax
 event: exit_screen
+---
+code: | 
+  email_sent_ok = send_email(to=studentattorney[0].email, template=fax_copy, attachments=file_to_fax)
+---
+template: fax_copy
+subject: |
+  Fax copy attached 
+content: |
+  This is an e-mail sent from a
+  **docassemble** interview.
+
+  Have a nice day!
+  recpient = studentattorney[0].email
+  added attachment in send_email
+
 ---
 #initial: True
 #code: |
