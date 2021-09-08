@@ -114,6 +114,7 @@ code: |
   if doc_select == 'jdc_student':
     school_discipline_case
   showed_disclosure
+  preview_intake
   # Save anonymized interview statistics (customize the saved data below)
   store_variables_snapshot(data={'zip': users[0].address.zip})
   #JDC_HIPAA_Improved_preview_question
@@ -571,6 +572,19 @@ subquestion: |
   ${Notice_of_Appearance_and_Disclosure_attachment}
 continue button field: intake_finished
 continue button label: Fax HIPPA 
+---
+id: intake forms complete
+question: |
+  Preview your forms
+subquestion: |
+  Click on a form to view. 
+
+  ${Authorization_For_Representation_attachment}
+
+  ${Notice_of_Appearance_and_Disclosure_attachment}
+  
+  ${JDC_HIPAA_Improved_attachment}
+continue button field: preview_intake 
 
 ---
 id: use forms
