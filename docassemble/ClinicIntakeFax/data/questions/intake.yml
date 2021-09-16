@@ -36,7 +36,6 @@ metadata:
   sessions are unique: True
   required privileges:
     - clinic
-    - admin
   require login: True
 ---
 code: |
