@@ -35,6 +35,7 @@ metadata:
     - HE-00-00-00-00
   sessions are unique: True
   required privileges:
+    - admin
     - clinic
   require login: True
 ---
@@ -140,28 +141,7 @@ code: |
   #display_fax_results
   
   #JDC_HIPAA_Improved_download
----
-event: require_login_screen
-question: |
-  You need to log in to finish this interview.
-buttons:
-  - Log in: leave
-    url: ${ url_of('https://apps-dev.suffolklitlab.org/user/sign-in', next=interview_url()) }
----
 
-initial: True
-code: |
-  if not user_has_privilege('clinic'):
-    kick_out_user
----
-id: sorry
-event: kick_out_user
-question: |
-  I am sorry, but you need to log in and be a clinical student at Suffolk University to use this interview. 
-buttons:
-  - Log in: signin
-    url: ${ url_of('login', next=interview_url()) }
-  - Exit: exit
 ---
 code: |
   signature_fields = ["client[0].signature", "parent[0].signature"]
