@@ -413,6 +413,10 @@ fields:
   - Fax subject: fax_subject
     maxlength: 33
   - Fax comment: fax_comment
+    default: |
+      We are requesting a full and complete copy of the ${ client[0].name }'s medical records. Enclosed please find a HIPAA release for these records for the above named person. I am specifically requesting any and all records on file with ${ hospital.name } related to ${ client[0].name }. 
+      
+      Thank you in advance and please do not hesitate to contact me with any questions. 
     datatype: area
     maxlength: 902
 ---
