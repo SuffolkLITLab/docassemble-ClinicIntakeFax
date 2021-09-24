@@ -45,7 +45,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 setup(name='docassemble.ClinicIntakeFax',
       version='',
       description=(''),
-      long_description='# docassemble.ClinicIntakeFax\r\n\r\ntesting link: \r\nhttps://apps-test.suffolklitlab.org/run/ClinicFax/#/2\r\n\r\n\r\n## Author\r\ncl.asouza@suffolk.edu\r\ncl.ktaraschke@suffolk.edu\r\nmcarroll11@su.suffolk.edu\r\n',
+      long_description='# docassemble.ClinicIntakeFax\r\n\r\ntesting link: \r\nhttps://apps-test.suffolklitlab.org/run/ClinicFax\r\n\r\n\r\n\r\n## Author\r\ncl.asouza@suffolk.edu\r\ncl.ktaraschke@suffolk.edu\r\nmcarroll11@su.suffolk.edu\r\n',
       long_description_content_type='text/markdown',
       author='Aubrie Souza',
       author_email='cl.ktaraschke@suffolk.edu',
