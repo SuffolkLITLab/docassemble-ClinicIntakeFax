@@ -102,7 +102,6 @@ code: |
   studentattorney.gather()
   #supervisor.gather()
   client.gather()
-
   if doc_select == 'jdc_student':
     parent.gather()
   #client[0].address.address
@@ -128,7 +127,6 @@ code: |
   #studentattorney.signature
   #supervisor.signature
   #intake_finished
-  ok_to_finish
   user_has_privilege('clinic')
   hospital.name.first
   fax_phone
@@ -144,7 +142,7 @@ code: |
 code: |
   if not user_logged_in():
     require_login_screen
-  ok_to_finish = True
+    ok_to_finish = True
 ---
 event: require_login_screen
 question: |
