@@ -127,9 +127,7 @@ code: |
   #studentattorney.signature
   #supervisor.signature
   #intake_finished
-  if not user_logged_in():
-    require_login_screen
-    ok_to_finish = True
+  ok_to_finish
   user_has_privilege('clinic')
   hospital.name.first
   fax_phone
@@ -140,6 +138,11 @@ code: |
   #display_fax_results
   
   #JDC_HIPAA_Improved_download
+---
+code: | 
+  if not user_logged_in():
+    require_login_screen
+  ok_to_finish = True
 ---
 event: require_login_screen
 question: |
@@ -195,8 +198,6 @@ right: |
 
   ${action_button_html(url_action('load_answer'), icon="folder-open", label=word("View answers"), size="sm" )}
   % endif
-
-
 ---
 #id: Student Attorney
 #question: |
