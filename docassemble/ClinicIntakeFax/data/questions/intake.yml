@@ -299,12 +299,6 @@ fields:
   #else:
     #sign_in_page
 ---
-question: |
-  Please sign in
-buttons:
-  - Sign in: signin
-sets: sign_in_page
----
 #id: supervisor info
 #question: |
 #  Supervisor information
