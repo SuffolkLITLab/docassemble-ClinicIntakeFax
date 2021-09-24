@@ -472,8 +472,7 @@ question: |
   What is ${ client[0] }'s address?
 fields:
   - code: |
-      client[0].address_fields()
-      
+      client[0].address_fields()   
 ---
 question: |
   Do you have a docket number for this case?
@@ -521,9 +520,6 @@ code: |
   except DAWebError as e:
     result = e.response_json
   got_result = True
----
-comment: | 
-  KEY0177F9770F9DA6B296C4098DDA8A8B99_EksqAtVPNAEp4XGMflLPuT
 ---
 code: | 
   pdf_url = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
@@ -599,7 +595,6 @@ attachment code: |
 field: saw_intake_forms
 under:
   continue button label: Done
-
 ---
 #initial: True
 #code: |
