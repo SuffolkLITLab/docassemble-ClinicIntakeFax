@@ -34,9 +34,6 @@ metadata:
   tags:
     - HE-00-00-00-00
   sessions are unique: True
-  required privileges:
-    - clinic
-  require login: True
 ---
 code: |
   al_form_type = 'existing_case'
@@ -131,6 +128,8 @@ code: |
   #studentattorney.signature
   #supervisor.signature
   #intake_finished
+  ok_to_finish
+  user_has_privilege('clinic')
   hospital.name.first
   fax_phone
   signature_date
@@ -140,28 +139,19 @@ code: |
   #display_fax_results
   
   #JDC_HIPAA_Improved_download
+
+---
+code: |
+  if not user_logged_in():
+    require_login_screen
+  ok_to_finish = True
 ---
 event: require_login_screen
 question: |
   You need to log in to finish this interview.
 buttons:
   - Log in: leave
-    url: ${ url_of('https://apps-dev.suffolklitlab.org/user/sign-in', next=interview_url()) }
----
-
-initial: True
-code: |
-  if not user_has_privilege('clinic'):
-    kick_out_user
----
-id: sorry
-event: kick_out_user
-question: |
-  I am sorry, but you need to log in and be a clinical student at Suffolk University to use this interview. 
-buttons:
-  - Log in: signin
     url: ${ url_of('login', next=interview_url()) }
-  - Exit: exit
 ---
 code: |
   signature_fields = ["client[0].signature", "parent[0].signature"]
@@ -235,7 +225,6 @@ fields:
       studentattorney[0].name_fields()
   - Email address: studentattorney[0].email
     datatype: email
-    default: ${ user_info().email }
 ---
 id: supervisor name 
 sets:
@@ -433,6 +422,10 @@ fields:
   - Fax subject: fax_subject
     maxlength: 33
   - Fax comment: fax_comment
+    default: |
+      We are requesting a full and complete copy of the ${ client[0].name }'s medical records. Enclosed please find a HIPAA release for these records for the above named person. I am specifically requesting any and all records on file with ${ hospital.name } related to ${ client[0].name }. 
+      
+      Thank you in advance and please do not hesitate to contact me with any questions. 
     datatype: area
     maxlength: 902
 ---
@@ -523,11 +516,10 @@ objects:
 ---
 code: |
   data = {'media_url': pdf_url,
-    'connection_id': '1584353915762115606',
+    'connection_id': get_config('telnyx fax',{}).get('connection id'),
     'to': hospital_fax_formatted, 
-    'from': '+18332979197'
-      }
-  headers = {'Authorization': 'Bearer KEY0177F9770F9DA6B296C4098DDA8A8B99_EksqAtVPNAEp4XGMflLPuT',
+    'from': get_config('telnyx fax',{}).get('my fax') }
+  headers = {'Authorization': "Bearer get_config('telnyx fax',{}).get('api key') ",
              'Content-Type': 'application/x-www-form-urlencoded'
              }
   try:
@@ -539,6 +531,9 @@ code: |
   except DAWebError as e:
     result = e.response_json
   got_result = True
+---
+comment: | 
+  KEY0177F9770F9DA6B296C4098DDA8A8B99_EksqAtVPNAEp4XGMflLPuT
 ---
 code: | 
   pdf_url = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
