@@ -127,6 +127,9 @@ code: |
   #studentattorney.signature
   #supervisor.signature
   #intake_finished
+  if not user_logged_in():
+    require_login_screen
+    ok_to_finish = True
   user_has_privilege('clinic')
   hospital.name.first
   fax_phone
@@ -137,12 +140,6 @@ code: |
   #display_fax_results
   
   #JDC_HIPAA_Improved_download
-
----
-code: |
-  if not user_logged_in():
-    require_login_screen
-    ok_to_finish = True
 ---
 event: require_login_screen
 question: |
