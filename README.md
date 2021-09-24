@@ -1,7 +1,8 @@
 # docassemble.ClinicIntakeFax
 
 testing link: 
-https://apps-test.suffolklitlab.org/run/ClinicFax/#/2
+https://apps-test.suffolklitlab.org/run/ClinicFax
+
 
 
 ## Author
