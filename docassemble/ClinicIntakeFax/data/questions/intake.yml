@@ -127,9 +127,9 @@ code: |
   #studentattorney.signature
   #supervisor.signature
   #intake_finished
-  if not user_logged_in():
-    require_login_screen
-  user_has_privilege('clinic')
+  #if not user_logged_in():
+  # require_login_screen
+  #user_has_privilege('clinic')
   hospital.name.first
   fax_phone
   signature_date
