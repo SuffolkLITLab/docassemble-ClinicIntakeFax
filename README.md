@@ -1,7 +1,7 @@
 # docassemble.ClinicIntakeFax
 
 testing link: 
-https://apps-test.suffolklitlab.org/run/ClinicFaxMachine
+https://apps-test.suffolklitlab.org/run/ClinicFax
 
 
 
