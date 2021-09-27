@@ -506,7 +506,7 @@ code: |
     'connection_id': get_config('telnyx fax',{}).get('connection id'),
     'to': hospital_fax_formatted, 
     'from': get_config('telnyx fax',{}).get('my fax') }
-  headers = {'Authorization': "Bearer get_config('telnyx fax',{}).get('api key') ",
+  headers = {'Authorization': get_config('telnyx fax',{}).get('api key'),
              'Content-Type': 'application/x-www-form-urlencoded'
              }
   try:
