@@ -33,7 +33,6 @@ metadata:
     HIPAA Intake App
   tags:
     - HE-00-00-00-00
-  sessions are unique: True
 ---
 code: |
   al_form_type = 'existing_case'
@@ -84,7 +83,7 @@ code: |
   allowed_courts = interview_metadata["JDC_HIPAA_Improved"]["allowed courts"]
   nav.set_section('review_JDC_HIPAA_Improved')
   user_role = 'defendant'
-  user = False
+  user = studentattorney
   users[0].address.state = False
   users[0].address.adress = False
   users[0].address.city = False
@@ -127,7 +126,7 @@ code: |
   #studentattorney.signature
   #supervisor.signature
   #intake_finished
-  okay_to_finish
+  ok_to_finish
   hospital.name.first
   fax_phone
   signature_date
@@ -138,10 +137,10 @@ code: |
   
   #JDC_HIPAA_Improved_download
 ---
-code: | 
+code: |
   if not user_logged_in():
     require_login_screen
-  okay_to_finish = True 
+  ok_to_finish
 ---
 event: require_login_screen
 question: |
