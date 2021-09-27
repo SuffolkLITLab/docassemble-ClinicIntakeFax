@@ -83,7 +83,7 @@ code: |
   allowed_courts = interview_metadata["JDC_HIPAA_Improved"]["allowed courts"]
   nav.set_section('review_JDC_HIPAA_Improved')
   user_role = 'defendant'
-  user = studentattorney
+  user = False
   users[0].address.state = False
   users[0].address.adress = False
   users[0].address.city = False
@@ -418,22 +418,25 @@ fields:
     maxlength: 902
 ---
 id: end screen
+
 mandatory: True 
 question: |
   Your fax has been sent
 subquestion: | 
-  Successful fax should display Result: queued below.
+  ##### Successful fax should display "Result: queued" below
+  ***
+  % if result:
   
+  **Result:** ${ result.get('data',{}).get('status') }
+  
+  % endif
+  ***
   You will recieve an email with a copy of the fax sent to ${ hospital.name }.
   
   Call the hospital to confirm receipt. 
   
-  Be sure to store a copy for your records. You can also download a copy below. 
+  Be sure to store a copy for your records. You can also download a copy below by clicking on a form to view.  
 
-  % if result:
-  **Result:** ${ result.get('data',{}).get('status') }
-  % endif
-  
   ${file_to_fax}
 buttons:
   - Exit: exit
