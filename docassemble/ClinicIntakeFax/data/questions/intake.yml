@@ -127,9 +127,7 @@ code: |
   #studentattorney.signature
   #supervisor.signature
   #intake_finished
-  if not user_logged_in():
-   require_login_screen
-  user_has_privilege('clinic')
+  okay_to_finish
   hospital.name.first
   fax_phone
   signature_date
@@ -140,16 +138,17 @@ code: |
   
   #JDC_HIPAA_Improved_download
 ---
-#code: | 
-#  if not user_logged_in():
-#    require_login_screen
-#---
-#event: require_login_screen
-#question: |
-#  You need to log in to finish this interview.
-#buttons:
-#  - Log in: leave
-#    url: ${ url_of('login', next=interview_url()) }
+code: | 
+  if not user_logged_in():
+    require_login_screen
+  okay_to_finish = True 
+---
+event: require_login_screen
+question: |
+  You need to log in to finish this interview.
+buttons:
+  - Log in: leave
+    url: ${ url_of('login', next=interview_url()) }
 ---
 code: |
   signature_fields = ["client[0].signature", "parent[0].signature"]
