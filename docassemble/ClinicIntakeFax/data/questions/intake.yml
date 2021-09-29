@@ -644,7 +644,7 @@ attachment:
       - "hospital.name": ${ hospital.name }
       - "student_attorney": ${ studentattorney[0].name }
       - "hospital.fax": ${ hospital.fax }
-      - "fax_from": ${ 18332979197 }
+      - "fax_from": ${ +16177520995 }
       - "fax_phone": ${ fax_phone }
       - "hospital.phone": ${ hospital.phone }
       - "todays.date": ${ today(format='MM/dd/YYYY') }
