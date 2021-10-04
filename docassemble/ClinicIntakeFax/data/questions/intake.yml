@@ -127,6 +127,7 @@ code: |
   #supervisor.signature
   #intake_finished
   ok_to_finish
+  #user_has_privilege('clinic')
   hospital.name.first
   fax_phone
   signature_date
@@ -140,6 +141,8 @@ code: |
 code: |
   if not user_logged_in():
     require_login_screen
+  if not user_has_privilege('clinic'):
+    kick_out
   ok_to_finish = True
 ---
 event: require_login_screen
@@ -148,6 +151,13 @@ question: |
 buttons:
   - Log in: leave
     url: ${ url_of('login', next=interview_url()) }
+---
+id: kickout
+event: kick_out
+question: | 
+  Sorry, you do not have the proper permissions to use this app
+subquestions: | 
+  This interview is for clinical students at Suffolk University Law School 
 ---
 code: |
   signature_fields = ["client[0].signature", "parent[0].signature"]
