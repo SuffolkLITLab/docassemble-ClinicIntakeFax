@@ -126,6 +126,7 @@ code: |
   #studentattorney.signature
   #supervisor.signature
   #intake_finished
+  preview_signed
   ok_to_finish
   #user_has_privilege('clinic')
   hospital.name.first
@@ -156,8 +157,8 @@ id: kickout
 event: kick_out
 question: | 
   Sorry, you do not have the proper permissions to use this app
-subquestions: | 
-  This interview is for clinical students at Suffolk University Law School 
+subquestion: | 
+  This interview is for clinical students at Suffolk University Law School. If you believe you should have access to this application contact your clinic director or email suffolklitlab@gmail.com
 ---
 code: |
   signature_fields = ["client[0].signature", "parent[0].signature"]
@@ -440,6 +441,7 @@ subquestion: |
   **Result:** ${ result.get('data',{}).get('status') }
   
   % endif
+  
   ***
   You will recieve an email with a copy of the fax sent to ${ hospital.name }.
   
@@ -596,6 +598,19 @@ subquestion: |
 #${Notice_of_Appearance_and_Disclosure_attachment}
 #${JDC_HIPAA_Improved_attachment}
 continue button field: preview_intake 
+---
+id: intake forms signed
+question: |
+  View your signed forms
+subquestion: |
+  Click on a form to view. 
+
+  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='final')} 
+#${Authorization_For_Representation_attachment}
+
+#${Notice_of_Appearance_and_Disclosure_attachment}
+#${JDC_HIPAA_Improved_attachment}
+continue button field: preview_signed 
 ---
 id: use forms
 question: |
