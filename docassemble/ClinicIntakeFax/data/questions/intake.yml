@@ -403,8 +403,6 @@ under: |
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
   - al_court_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
-  #- JDC_fax: DAStaticFile.using(filename='data/templates/JDC_HIPAA_Improved.pdf') 
-  #creates a url for the completed form to "live", and then this
   - fax_package: ALDocumentBundle.using(elements=[Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment], filename="fax_package.pdf", title="HIPAA fax")
 ---
 objects: 
@@ -435,14 +433,15 @@ question: |
   Your fax has been sent
 subquestion: | 
   ##### Successful fax should display "Result: queued" below
-  ***
-  % if result:
-  
-  **Result:** ${ result.get('data',{}).get('status') }
-  
+
+  % if got_result.received():
+  The fax was received.
+  % else:
+  The status of the fax is
+  ${ got_result.status() }.
   % endif
   
-  ***
+ 
   You will recieve an email with a copy of the fax sent to ${ hospital.name }.
   
   Call the hospital to confirm receipt. 
@@ -516,26 +515,29 @@ fields:
 objects:
   - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
 ---
-code: |
-  data = {'media_url': pdf_url,
-    'connection_id': get_config('telnyx fax',{}).get('connection id'),
-    'to': hospital_fax_formatted, 
-    'from': get_config('telnyx fax',{}).get('my fax') }
-  headers = {'Authorization': get_config('telnyx fax',{}).get('api key'),
-             'Content-Type': 'application/x-www-form-urlencoded'
-             }
-  try:
-    result = web.post('faxes',
-                      data=data,
-                      headers=headers,
-                      json_body=False,
-                      )
-  except DAWebError as e:
-    result = e.response_json
-  got_result = True
+#code: |
+#  data = {'media_url': pdf_url,
+#    'connection_id': get_config('telnyx fax',{}).get('connection id'),
+#    'to': hospital_fax_formatted, 
+#    'from': get_config('telnyx fax',{}).get('my fax') }
+#  headers = {'Authorization': get_config('telnyx fax',{}).get('api key'),
+#             'Content-Type': 'application/x-www-form-urlencoded'
+#             }
+#  try:
+#    result = web.post('faxes',
+#                      data=data,
+#                      headers=headers,
+#                      json_body=False,
+#                      )
+#  except DAWebError as e:
+#    result = e.response_json
+#  got_result = True
 ---
 code: | 
   pdf_url = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
+---
+code: |
+  got_result = send_fax(hospital_fax_formatted, file_to_fax)
 ---
 reload: 10
 id: fax endscreen
