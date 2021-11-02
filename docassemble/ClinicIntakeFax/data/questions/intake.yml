@@ -18,15 +18,6 @@ objects:
   - docket_numbers: DAList.using(there_are_any=True)
   - courts: DAList.using(auto_gather=False, target_number=1, gathered=True)
 ---
-id: clinic choice
-question: |
-  Select your clinic
-field: doc_select
-choices:
-  - Juvenile Defenders: jdc_student
-  - Defenders: defenders_student
-  - Accelerator to Practice: a2p_student
----
 metadata:
   title: |
     Suffolk Juvenile Defenders
@@ -129,7 +120,6 @@ code: |
   #  parent[0].signature
   #studentattorney.signature
   #supervisor.signature
-  #intake_finished
   preview_signed
   ok_to_finish
   #user_has_privilege('clinic')
@@ -163,6 +153,15 @@ question: |
   Sorry, you do not have the proper permissions to use this app
 subquestion: | 
   This interview is for clinical students at Suffolk University Law School. If you believe you should have access to this application contact your clinic director or email suffolklitlab@gmail.com
+---
+id: clinic choice
+question: |
+  Select your clinic
+field: doc_select
+choices:
+  - Juvenile Defenders: jdc_student
+  - Defenders: defenders_student
+  - Accelerator to Practice: a2p_student
 ---
 id: signature fields 
 code: |
@@ -416,14 +415,13 @@ under: |
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
   - al_court_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
-  #- JDC_fax: DAStaticFile.using(filename='data/templates/JDC_HIPAA_Improved.pdf') 
-  #creates a url for the completed form to "live", and then this
   - fax_package: ALDocumentBundle.using(elements=[Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment], filename="fax_package.pdf", title="HIPAA fax")
+  - Defender_Package: ALDocumentBundle.using(elements=[Defenders_HIPAA], filename="fax_package.pdf", title="HIPAA fax")
 ---
 objects: 
   - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)
   - Fax_cover_sheet_attachment: ALDocument.using(title="This is the intro", filename="fax_cover_sheet.pdf", enabled=True, has_addendum=False)
-  - Defenders_HIPAA: ALDocument.using(title="Defenders HIPAA", filename="Defenders_HIPAA.pdf", enabled=True, has_addendum=False)
+  - Defenders_HIPAA: ALDocument.using(elements=[Defenders_HIPAA], title="Defenders HIPAA", filename="Defenders_HIPAA.pdf", enabled=True, has_addendum=False)
 ---
 id:  fax cover sheet 
 question: |
@@ -585,20 +583,7 @@ subquestion: |
 field: got_result
 continue button label: Send fax
 ---
-id: intake forms complete
-question: |
-  Your intake forms are ready.
-attachment code: JDC_HIPAA_Improved_attachment
-subquestion: |
-  Click on a form to view. Scroll down to get your forms.
 
-  ${JDC_HIPAA_Improved_attachment}
-
-  ${Authorization_For_Representation_attachment}
-
-  ${Notice_of_Appearance_and_Disclosure_attachment}
-continue button field: intake_finished
-continue button label: Fax HIPAA 
 ---
 id: preview before signing
 question: |
@@ -620,15 +605,19 @@ id: intake forms signed
 question: |
   View your signed forms
 subquestion: |
-  Click on a form to view. 
   % if doc_select == 'jdc_student':
-  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='final')} 
+  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='preview')} 
   % endif 
   
   % if doc_select == 'defenders_student':
-  ${ Defenders_HIPAA.as_pdf(key='final')} 
+  ${ Defender_Package.as_pdf(key='preview')} 
   % endif 
-continue button field: preview_signed 
+  
+  ${ Defender_Package.download_list_html() }
+  ${ Defender_Package.send_button_html() }
+  
+continue button field: preview_signed
+continue button label: Continue to Send Fax
 ---
 id: use forms
 question: |
