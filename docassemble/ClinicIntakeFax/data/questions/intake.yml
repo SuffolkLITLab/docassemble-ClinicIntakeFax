@@ -16,6 +16,7 @@ objects:
   - accelerator: DAObject
   - users: ALPeopleList
   - docket_numbers: DAList.using(there_are_any=True)
+  - courts: DAList.using(auto_gather=False, target_number=1, gathered=True)
 ---
 id: clinic choice
 question: |
@@ -97,12 +98,15 @@ comment: |
 mandatory: True
 code: |
   JDC_HIPAA_Improved_intro
-  doc_select = 'jdc_student'
+  doc_select
   studentattorney.gather()
   #supervisor.gather()
   client.gather()
   if doc_select == 'jdc_student':
     parent.gather()
+  if doc_select == 'defenders_student': 
+    trial_court
+    records_choice
   #client[0].address.address
 
   #supervisor.name.first
@@ -160,8 +164,12 @@ question: |
 subquestion: | 
   This interview is for clinical students at Suffolk University Law School. If you believe you should have access to this application contact your clinic director or email suffolklitlab@gmail.com
 ---
+id: signature fields 
 code: |
-  signature_fields = ["client[0].signature", "parent[0].signature"]
+  if doc_select == 'jdc_student':
+    signature_fields = ["client[0].signature", "parent[0].signature"]
+  else:
+    signature_fields = ["client[0].signature"]
 ---
 id: Main intro screen
 decoration: fax
@@ -293,22 +301,6 @@ fields:
   - code: | 
       hospital.address_fields()
 ---
-#id: Client info
-#question: |
-#  Client's information
-#fields:
-#  - First Name: client.name.first
-#  - Last Name: client.name.last
-#  - Client Birthday: client.dob
-#    datatype: birthdate
----
-#mandatory: True
-#code: |
-  #if user_logged_in():
-    #goodbye_page
-  #else:
-    #sign_in_page
----
 #id: supervisor info
 #question: |
 #  Supervisor information
@@ -321,13 +313,34 @@ fields:
 #    datatype: email
 #continue button field: supervisor_info
 ---
-#id: Legal Guardian information
-#question: |
-#  Legal guardian information
-#fields:
-#  - First name: parent.name.first
-#  - Last name: parent.name.last
-#continue button field: guardian_info
+comment: |
+  ############# START OF DEFENDERS CLINIC SPECIFIC INFORMATION ###########
+---
+id: court defenders 
+question: | 
+  What court is this case in? 
+fields: 
+  - Court: trial_court
+    datatype: combobox
+    code: |
+      sorted((set([str(y) for y in all_courts.filter_courts(["District Court","Boston Municipal Court", "Superior Court"])])))  
+---
+id: what records
+question: | 
+  Do you want to request all record information or only certain records?
+fields: 
+  - Records: records_choice 
+    input type: radio 
+    choices: 
+      - All records 
+      - Only some records
+  - Records: what_records
+    show if: 
+      variable: records_choice
+      is: 'Only some records'
+---
+comment: |
+ ########### END OF DEFENDERS CLINIC SPECIFIC INFORMATION END ##############
 ---
 id: supervisor signature
 question: |
@@ -410,6 +423,7 @@ objects:
 objects: 
   - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)
   - Fax_cover_sheet_attachment: ALDocument.using(title="This is the intro", filename="fax_cover_sheet.pdf", enabled=True, has_addendum=False)
+  - Defenders_HIPAA: ALDocument.using(title="Defenders HIPAA", filename="Defenders_HIPAA.pdf", enabled=True, has_addendum=False)
 ---
 id:  fax cover sheet 
 question: |
@@ -586,17 +600,20 @@ subquestion: |
 continue button field: intake_finished
 continue button label: Fax HIPAA 
 ---
-id: intake forms complete
+id: preview before signing
 question: |
   Preview your forms
 subquestion: |
   Click on a form to view. 
 
+  % if doc_select == 'jdc_student':
   ${ JDC_HIPAA_Improved_attachment.as_pdf(key='preview')} 
-#${Authorization_For_Representation_attachment}
+  % endif 
+  
+  % if doc_select == 'defenders_student':
+  ${ Defenders_HIPAA.as_pdf(key='preview')} 
+  % endif 
 
-#${Notice_of_Appearance_and_Disclosure_attachment}
-#${JDC_HIPAA_Improved_attachment}
 continue button field: preview_intake 
 ---
 id: intake forms signed
@@ -604,12 +621,13 @@ question: |
   View your signed forms
 subquestion: |
   Click on a form to view. 
-
+  % if doc_select == 'jdc_student':
   ${ JDC_HIPAA_Improved_attachment.as_pdf(key='final')} 
-#${Authorization_For_Representation_attachment}
-
-#${Notice_of_Appearance_and_Disclosure_attachment}
-#${JDC_HIPAA_Improved_attachment}
+  % endif 
+  
+  % if doc_select == 'defenders_student':
+  ${ Defenders_HIPAA.as_pdf(key='final')} 
+  % endif 
 continue button field: preview_signed 
 ---
 id: use forms
@@ -654,8 +672,12 @@ content: |
   
   Store a copy for your records. 
 ---
-code: 
-  file_to_fax = pdf_concatenate(Fax_cover_sheet_attachment.as_pdf(), JDC_HIPAA_Improved_attachment.as_pdf())
+id: file to fax 
+code: |
+  if doc_select == 'jdc_student':
+    file_to_fax = pdf_concatenate(Fax_cover_sheet_attachment.as_pdf(), JDC_HIPAA_Improved_attachment.as_pdf())
+  elif doc_select == 'defenders_student':
+    file_to_fax = pdf_concatenate(Fax_cover_sheet_attachment.as_pdf(), Defenders_HIPAA.as_pdf())
 ---
 id: Fax cover sheet attachment
 attachment:
@@ -695,6 +717,34 @@ attachment:
       - "todays_date__3": ${ today(format='MM/dd/YYYY') }  
       - "client_signature": ${ client[0].signature_if_final(i) }
       - "parent_signature": ${ parent[0].signature_if_final(i) }
+---
+id: Defenders HIPAA
+attachment:
+  name: Defenders HIPAA
+  variable name: Defenders_HIPAA[i]
+  filename: Defenders_HIPAA
+  skip undefined: True
+  pdf template file: Defenders_Clinic_HIPAA.pdf
+  editable: False
+  fields:
+      - "client_name__1": ${ client[0].name }
+      - "student_attorney": ${ studentattorney[0].name }
+      - "hospital.name": ${ hospital.name }
+      - "trial_court": ${ trial_court } 
+      - "all_information": |
+          % if records_choice == 'All records':
+          ${ records_choice }
+          % endif
+      - "some_records": | 
+          % if records_choice == 'Only some records':
+          ${ records_choice }
+          % endif 
+      - "records_relating": ${ what_records}
+      - "client_signature": ${ client[0].signature_if_final(i) }
+      - "todays_date__1": ${ today(format='MM/dd/YYYY') }
+      - "client_dob": ${ client.dob.format('MM/dd/YYY') }
+      - "admission_dates": ${ admission_release_dates }
+      - "hospital.fax": ${ hospital.fax }
 ---
 attachment:
   variable name: Notice_of_Appearance_and_Disclosure_attachment
