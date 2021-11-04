@@ -162,7 +162,7 @@ question: |
 fields: 
   - HIPPA: fill_HIPPA
     datatype: yesnowide
-  - 'SJC Rule 3:03" 03 Form:' sjc_303
+  - 'SJC Rule 3:03 Form': sjc_303
   - Authorization for Representation: clinic_auth 
 ---
 id: clinic choice
