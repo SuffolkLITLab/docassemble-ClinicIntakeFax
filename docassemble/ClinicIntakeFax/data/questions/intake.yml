@@ -156,15 +156,6 @@ question: |
 subquestion: | 
   This interview is for clinical students at Suffolk University Law School. If you believe you should have access to this application contact your clinic director or email suffolklitlab@gmail.com
 ---
-id: form choice 
-question: | 
-  What forms do you want to fill out 
-fields: 
-  - HIPPA: fill_HIPPA
-    datatype: yesnowide
-  - 'SJC Rule 3:03 Form': sjc_303
-  - Authorization for Representation: clinic_auth 
----
 id: clinic choice
 question: |
   Select your clinic
