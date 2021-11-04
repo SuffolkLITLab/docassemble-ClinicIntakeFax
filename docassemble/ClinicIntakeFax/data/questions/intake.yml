@@ -98,6 +98,8 @@ code: |
   if doc_select == 'defenders_student': 
     trial_court
     records_choice
+  if doc_select == 'a2p_student':
+    message("The interview is over.", "Better luck next time!")
   #client[0].address.address
 
   #supervisor.name.first
@@ -153,6 +155,15 @@ question: |
   Sorry, you do not have the proper permissions to use this app
 subquestion: | 
   This interview is for clinical students at Suffolk University Law School. If you believe you should have access to this application contact your clinic director or email suffolklitlab@gmail.com
+---
+id: form choice 
+question: | 
+  What forms do you want to fill out 
+fields: 
+  - HIPPA: fill_HIPPA
+    datatype: yesnowide
+  - 'SJC Rule 3:03" 03 Form:' sjc_303
+  - Authorization for Representation: clinic_auth 
 ---
 id: clinic choice
 question: |
@@ -421,7 +432,7 @@ objects:
 objects: 
   - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)
   - Fax_cover_sheet_attachment: ALDocument.using(title="This is the intro", filename="fax_cover_sheet.pdf", enabled=True, has_addendum=False)
-  - Defenders_HIPAA: ALDocument.using(elements=[Defenders_HIPAA], title="Defenders HIPAA", filename="Defenders_HIPAA.pdf", enabled=True, has_addendum=False)
+  - Defenders_HIPAA: ALDocument.using(title="Defenders HIPAA", filename="Defenders_HIPAA.pdf", enabled=True, has_addendum=False) 
 ---
 id:  fax cover sheet 
 question: |
@@ -611,10 +622,12 @@ subquestion: |
   
   % if doc_select == 'defenders_student':
   ${ Defender_Package.as_pdf(key='preview')} 
-  % endif 
-  
   ${ Defender_Package.download_list_html() }
   ${ Defender_Package.send_button_html() }
+  
+  % endif 
+  
+
   
 continue button field: preview_signed
 continue button label: Continue to Send Fax
