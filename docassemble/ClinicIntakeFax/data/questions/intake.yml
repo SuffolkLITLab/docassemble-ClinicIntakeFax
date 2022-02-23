@@ -91,6 +91,8 @@ code: |
   JDC_HIPAA_Improved_intro
   doc_select
   studentattorney.gather()
+  Forms_choice
+  parent_choice
   #supervisor.gather()
   client.gather()
   if doc_select == 'jdc_student':
@@ -98,9 +100,43 @@ code: |
   if doc_select == 'defenders_student': 
     trial_court
     records_choice
+  if Forms_choice["Boston Medical Center"]:
+    pathology_reports__1
+    HIV_want
+  if HIV_want:
+    HIV_signature
+  if STD_want:
+    STD_signature
+  if GeneticCounseling_want:
+    GeneticCounseling_signature
+  if SexAssault_want:
+    SexAssault_signature
+  if DV_want:
+    DV_signature
+  if pyschiatric_want:
+    pyschiatric_signature
+  if SW_want:
+    SW_signature
+  if pyschologist_want:
+    pyschologist_signature
+  if AlcoholDrugAbuse_want:
+    AlcoholDrugAbuse_signature
   if doc_select == 'a2p_student':
     message("The interview is over.", "Better luck next time!")
-  #client[0].address.address
+  if Forms_choice["Boston Medical Center"]:
+    mr_number
+    pickup
+    mail_to__1
+  if pickup == False:
+     mailwho
+  if Forms_choice["Boston Medical Center"]:
+    file_type
+    electronic_preference__1
+    
+    
+    
+  client[0].address.address
+  client[0].phone
 
   #supervisor.name.first
   #client.name.first
@@ -167,7 +203,7 @@ choices:
 ---
 id: signature fields 
 code: |
-  if doc_select == 'jdc_student':
+  if parent_choice:
     signature_fields = ["client[0].signature", "parent[0].signature"]
   else:
     signature_fields = ["client[0].signature"]
@@ -264,7 +300,7 @@ question: |
 fields:
   - code: |
       client[0].name_fields()
-  - Birthdate: client.dob
+  - Birthdate: client.birthdate
     datatype: birthdate
 ---
 id: legal gaurdian 
@@ -326,6 +362,32 @@ fields:
     code: |
       sorted((set([str(y) for y in all_courts.filter_courts(["District Court","Boston Municipal Court", "Superior Court"])])))  
 ---
+id: what forms
+question: | 
+  Which HIPAA forms would you like?
+fields:
+  - note: |
+      Our generic HIPAA forms have been acceptepted by these hospitals in the past:
+      
+      * SouthBay Community Services
+      
+      Our generic HIPAA forms have not been acceptepted by these hospitals in the past:
+      
+      * Boston Medical Center
+      
+      Please check off which forms you would like
+  - "HIPAA forms.": Forms_choice
+    datatype: checkboxes
+    choices:
+      - Defenders Generic HIPAA Form
+      - Juvenille Defenders Generic HIPAA Form
+      - Boston Medical Center
+---
+id: parent sign
+question: | 
+  Will a guardian need to sign for these records?
+yesno: parent_choice
+---
 id: what records
 question: | 
   Do you want to request all record information or only certain records?
@@ -335,10 +397,179 @@ fields:
     choices: 
       - All records 
       - Only some records
-  - Records: what_records
+  - Description of records you would like: what_records
     show if: 
       variable: records_choice
       is: 'Only some records'
+---
+id: specific records
+question: | 
+  Please indicate if you would like these specific types of records.
+fields: 
+  - Pathology Reports: pathology_reports__1
+    datatype: yesno
+  - Description of what pathology records you would like: pathology_reports_description__1
+    show if: 
+      variable: pathology_reports__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - Consultation Reports: consultation_reports__1
+    datatype: yesno
+  - Description of what consultation reports you would like: consultation_reports_description__1
+    show if: 
+      variable: consultation_reports__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - Medication Records: medication_records__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what medication records you would like: medication_records_description__1
+    show if: 
+      variable: medication_records__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - Clinic Notes: clinic_notes__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what clinic notes you would like: clinic_notes_description__1
+    show if: 
+      variable: clinic_notes__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - ED Records: ED_records__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what ED records you would like: ED_records_description__1
+    show if: 
+      variable: ED_records__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - MRI reports: MRI_reports__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what MRI reports you would like: MRI_reports_description__1
+    show if: 
+      variable: MRI_reports__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - Other Informaiton: other_information__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what other_information you would like: other_information_description__1
+    show if: 
+      variable: other_information__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+---
+id: Sensitive Want
+question: | 
+  Please indicate if you would like records that contain the following.  
+subquestion: |
+  Please note that your client will have to initial for each of the below you request.
+fields:
+  - HIV Test Results: HIV_want
+    datatype: yesno
+  - STDS: STD_want
+    datatype: yesno
+  - Genetic Counseling: GeneticCounseling_want
+    datatype: yesno
+  - Sexual Assault: SexAssault_want
+    datatype: yesno
+  - Domestic Violence: DV_want
+    datatype: yesno
+  - Psychiatric Records or Information: pyschiatric_want
+    datatype: yesno
+  - Social Work Counseling/Therapy: SW_want
+    datatype: yesno
+  - Proffessional services of a licensed psychologist: pyschologist_want
+    datatype: yesno
+  - Psychotherapy Notes: pyschotherapy_want
+    datatype: yesno
+  - Alchol and Drug Abuse Records: AlcoholDrugAbuse_want
+    datatype: yesno
+---
+id: HIV signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request HIV records.  Please initial below to allow.
+signature: HIV_signature
+---
+id: STD signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request STD records.  Please initial below to allow.
+signature: STD_signature
+---
+id: GeneticCounseling signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Genetic Counseling records.  Please initial below to allow.
+signature: GeneticCounseling_signature
+---
+id: SexAssault signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Sex Assault records.  Please initial below to allow.
+signature: SexAssault_signature
+---
+id: DV signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Domestic Violence records.  Please initial below to allow.
+signature: DV_signature
+---
+id: pyschiatric signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Psychiatric Records or Information.  Please initial below to allow.
+signature: pyschiatric_signature
+---
+id: SW signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Social Work Counseling or Therapy records.  Please initial below to allow.
+signature: SW_signature
+---
+id: pyschologist signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request records relating to services of a licensed psychologist.  Please initial below to allow.
+signature: pyschologist_signature
+---
+id: pyschotherapy signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Psychotherapy notes.  Please initial below to allow.
+signature: pyschotherapy_signature
+---
+id: Alchohol Drug Signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Alchol and Drug Abuse records.  Please initial below to allow.
+signature: AlcoholDrugAbuse_signature
 ---
 comment: |
  ########### END OF DEFENDERS CLINIC SPECIFIC INFORMATION END ##############
@@ -382,10 +613,10 @@ under: |
 #    button: |
 #      **Client name full**:
 #      ${ client.name }
-#  - Edit: client.dob
+#  - Edit: client.birthdate
 #    button: |
 #      **Client dob**:
-#      ${ client.dob }
+#      ${ client.birthdate }
 #  - Edit: todays.date
 #    button: |
 #      **Date of todays**:
@@ -424,6 +655,7 @@ objects:
   - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)
   - Fax_cover_sheet_attachment: ALDocument.using(title="This is the intro", filename="fax_cover_sheet.pdf", enabled=True, has_addendum=False)
   - Defenders_HIPAA: ALDocument.using(title="Defenders HIPAA", filename="Defenders_HIPAA.pdf", enabled=True, has_addendum=False) 
+  - BMC_HIPAA: ALDocument.using(title="BMC_HIPAA", filename="BMC_HIPAA.pdf", enabled=True, has_addendum=False)
 ---
 id:  fax cover sheet 
 question: |
@@ -499,7 +731,38 @@ question: |
   What is ${ client[0] }'s address?
 fields:
   - code: |
-      client[0].address_fields()   
+      client[0].address_fields()
+  - "Does your client have another address?": alternativeaddress
+    datatype: yesnoradio
+    show if:
+      code: |
+        Forms_choice["Boston Medical Center"]
+---
+code: |
+  client[0].alternate.address.address
+  client[0].alternate.address.city
+  client[0].alternate.address.zip
+  client[0].alternate.complete = True
+---
+id: client alternative address
+generic object: ALIndividual
+sets:
+  - client[0].alternate.address.address
+  - client[0].alternate.address.city
+  - client[0].alternate.address.zip
+question: |
+  What is ${ client[0] }'s alternative address?
+fields:
+  - code: |
+      client[0].alternate.address_fields()
+---
+id: client contact
+generic object: ALIndividual
+question: |
+  What is ${ client[0] }'s phone number?
+fields:
+     - phone number: client[0].phone  
+       required: False
 ---
 question: |
   Do you have a docket number for this case?
@@ -526,6 +789,56 @@ fields:
     required: false
   - Case number: school_case
     show if: has_school_case
+---
+continue button field: mr_number
+id: Medical Record Number
+question: |
+  What is your client's MR number?
+fields:
+  - no label: client_MR_number
+    datatype: text
+    required: false
+---
+continue button field: pickup_type
+id: Pickup type
+question: How would you like to get your records?
+field: pickup
+buttons:
+  - Pick up: True
+  - Mail: False
+---
+code: |
+  if pickup:
+    mail_to__1 = False
+    pickup__1 = True
+  else:
+    mail_to__1 = True
+    pickup__1 = False
+---
+continue button field: pickup_type
+id: Pickup type
+question: Who would you like to mail the records to?
+fields:
+  - Name: mailwho
+    hint: Joan Luke
+  - Address (one line): mailaddress
+    hint: 120 Tremont St, Boston, MA 02108
+---
+continue button field: files_type
+id: Pickup type
+question: What format would you like the records in?
+field: file_type
+buttons:
+  - Paper: True
+  - Electronic: False
+---
+code: |
+  if file_type:
+    electronic_preference__1 = False
+    paper_preference__1 = True
+  else:
+    electronic_preference__1 = True
+    paper_preference__1 = False
 ---
 objects:
   - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
@@ -585,20 +898,22 @@ subquestion: |
 field: got_result
 continue button label: Send fax
 ---
-
----
 id: preview before signing
 question: |
   Preview your forms
 subquestion: |
   Click on a form to view. 
 
-  % if doc_select == 'jdc_student':
-  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='preview')} 
+  % if Forms_choice["Boston Medical Center"]:
+  ${ BMC_HIPAA.as_pdf(key='preview')} 
   % endif 
   
-  % if doc_select == 'defenders_student':
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
   ${ Defenders_HIPAA.as_pdf(key='preview')} 
+  % endif 
+
+  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='preview')} 
   % endif 
 
 continue button field: preview_intake 
@@ -607,11 +922,17 @@ id: intake forms signed
 question: |
   View your signed forms
 subquestion: |
-  % if doc_select == 'jdc_student':
+
+
+  % if Forms_choice["Boston Medical Center"]:
+  ${ BMC_HIPAA.as_pdf(key='preview')} 
+  % endif 
+  
+  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
   ${ JDC_HIPAA_Improved_attachment.as_pdf(key='preview')} 
   % endif 
   
-  % if doc_select == 'defenders_student':
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
   ${ Defender_Package.as_pdf(key='preview')} 
   ${ Defender_Package.download_list_html() }
   ${ Defender_Package.send_button_html() }
@@ -704,7 +1025,7 @@ attachment:
       - "client_name__2": ${ client[0].name }
       - "parent_name": ${ parent[0].name }
       - "student_attorney": ${ studentattorney[0].name }
-      - "client_dob": ${ client.dob.format() }
+      - "client_dob": ${ client.birthdate.format() }
       - "todays_date__1": ${ today(format='MM/dd/YYYY') }
       - "todays_date__2": ${ today(format='MM/dd/YYYY') }  
       - "todays_date__3": ${ today(format='MM/dd/YYYY') }  
@@ -735,9 +1056,73 @@ attachment:
       - "records_relating": ${ what_records}
       - "client_signature": ${ client[0].signature_if_final(i) }
       - "todays_date__1": ${ today(format='MM/dd/YYYY') }
-      - "client_dob": ${ client.dob.format('MM/dd/YYY') }
+      - "client_dob": ${ client.birthdate.format('MM/dd/YYY') }
       - "admission_dates": ${ admission_release_dates }
       - "hospital.fax": ${ hospital.fax }
+---
+id: BMC HIPAA
+attachment:
+  name: BMC HIPAA
+  variable name: BMC_HIPAA[i]
+  filename: BMC_HIPAA
+  skip undefined: True
+  pdf template file: BMC_HIPAA.pdf
+  editable: False
+  fields:
+      - "client_name_last__1": ${ client[0].name.last }
+      - "client_name_first__1": ${ client[0].name.first }
+      - "client_name_middle_initial__1": ${ client[0].name.middle_initial() }
+      - "client_address_city_state_zip": ${ client[0].address.zip }
+      - "client_address_address__1": ${ client[0].address.address }
+      - "client_address_city__1": ${ client[0].address.city }
+      - "client_address_state__1": ${ client[0].address.state } 
+      - "client_address_zip__1": ${ client[0].address.zip } 
+      - "client_address_address__2": ${ client[0].alternate.address.address }
+      - "client_address_city__2": ${ client[0].alternate.address.city }
+      - "client_address_state__2": ${ client[0].alternate.address.state } 
+      - "client_address_zip__2": ${ client[0].alternate.address.zip } 
+      - "client_birthdate_day__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='dd') }
+      - "client_birthdate_month__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='MM') }
+      - "client_birthdate_year__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='yy') }
+      - "client_phone_number__1": ${ client[0].phone }
+      - "client_MR_number__1": ${ client_MR_number }
+      - "student_attorney_address_address__1": ${ studentattorney[0].address.address }
+      - "student_attorney_address_city__1": ${ studentattorney[0].address.city }
+      - "student_attorney_address_state__1": ${ studentattorney[0].address.state }
+      - "student_attorney_address_zip__1": ${ studentattorney[0].address.zip }
+      - "mailwho": ${ mailwho }
+      - "mailaddress": ${ mailaddress }
+      - "pathology_reports_description__1": ${ pathology_reports_description__1 }
+      - "clinic_notes_description__1": ${ clinic_notes_description__1 }
+      - "consultation_reports_description__1": ${ consultation_reports_description__1 } 
+      - "MRI_reports_description__1": ${ MRI_reports_description__1 } 
+      - "medication_records_description__1": ${ medication_records_description__1 } 
+      - "ED_records_description__1": ${ ED_records_description__1 }
+      - "other_information_description__1": ${ other_information_description__1 }
+      - "client_initial_HIV__1": ${ HIV_signature }
+      - "client_initial_STD__1": ${ STD_signature } 
+      - "client_initial_GeneticCounseling__1": ${ GeneticCounseling_signature } 
+      - "client_initial_SexAssault__1": ${ SexAssault_signature }
+      - "client_initial_DV__1": ${ DV_signature } 
+      - "client_initial_pyschiatric__1": ${ pyschiatric_signature } 
+      - "client_initial_SW__1": ${ SW_signature } 
+      - "client_initial_pyschologist__1": ${ pyschologist_signature } 
+      - "client_initial_pyschotherapy__1": ${ pyschotherapy_signature } 
+      - "client_initial_AlcoholDrugAbuse__1": ${ AlcoholDrugAbuse_signature }
+      - "Mail_to__1": ${ mail_to__1 }
+      - "pickup__1": ${ pickup__1 }
+      - "clinic_notes__1": ${ clinic_notes__1 }
+      - "pathology_reports__1": ${ pathology_reports__1 }
+      - "consultation_reports__1": ${ consultation_reports__1 }
+      - "medication_records__1": ${ medication_records__1 }
+      - "other_information__1": ${ other_information__1 }
+      - "MRI_reports__1": ${ MRI_reports__1 }
+      - "ED_records__1": ${ ED_records__1 }
+      - "paper_preference__1": ${ paper_preference__1 }
+      - "electronic_preference__1": ${ electronic_preference__1 }      
+      - "client_signature": ${ client[0].signature }
+      - "todays_date__1": ${ today(format='MM/dd/YYYY') }
+      
 ---
 attachment:
   variable name: Notice_of_Appearance_and_Disclosure_attachment
