@@ -131,11 +131,11 @@ code: |
      mailwho
   if Forms_choice["Boston Medical Center"]:
     file_type
-    electronic_preference__1
-    
-    
+    electronic_preference__1 
     
   client[0].address.address
+  if alternativeaddress:
+    client[0].mailing_address.address
   client[0].phone
 
   #supervisor.name.first
@@ -739,22 +739,22 @@ fields:
         Forms_choice["Boston Medical Center"]
 ---
 code: |
-  client[0].alternate.address.address
-  client[0].alternate.address.city
-  client[0].alternate.address.zip
-  client[0].alternate.complete = True
+  client[i].mailing_address.address
+  client[i].mailing_address.city
+  client[i].mailing_address.zip
+  client[i].mailing_address.complete = True
 ---
 id: client alternative address
 generic object: ALIndividual
 sets:
-  - client[0].alternate.address.address
-  - client[0].alternate.address.city
-  - client[0].alternate.address.zip
+  - client[0].mailing_address.address
+  - client[0].mailing_address.city
+  - client[0].mailing_address.zip
 question: |
   What is ${ client[0] }'s alternative address?
 fields:
   - code: |
-      client[0].alternate.address_fields()
+      client[0].mailing_address.address_fields()
 ---
 id: client contact
 generic object: ALIndividual
@@ -1077,10 +1077,10 @@ attachment:
       - "client_address_city__1": ${ client[0].address.city }
       - "client_address_state__1": ${ client[0].address.state } 
       - "client_address_zip__1": ${ client[0].address.zip } 
-      - "client_address_address__2": ${ client[0].alternate.address.address }
-      - "client_address_city__2": ${ client[0].alternate.address.city }
-      - "client_address_state__2": ${ client[0].alternate.address.state } 
-      - "client_address_zip__2": ${ client[0].alternate.address.zip } 
+      - "client_address_address__2": ${ client[0].mailing_address.address }
+      - "client_address_city__2": ${ client[0].mailing_address.city }
+      - "client_address_state__2": ${ client[0].mailing_address.state } 
+      - "client_address_zip__2": ${ client[0].mailing_address.zip } 
       - "client_birthdate_day__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='dd') }
       - "client_birthdate_month__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='MM') }
       - "client_birthdate_year__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='yy') }
