@@ -113,24 +113,24 @@ code: |
     pathology_reports__1
   if Forms_choice["Boston Medical Center"]:
     HIV_want
-  if HIV_want:
-    HIV_signature
-  if STD_want:
-    STD_signature
-  if GeneticCounseling_want:
-    GeneticCounseling_signature
-  if SexAssault_want:
-    SexAssault_signature
-  if DV_want:
-    DV_signature
-  if pyschiatric_want:
-    pyschiatric_signature
-  if SW_want:
-    SW_signature
-  if pyschologist_want:
-    pyschologist_signature
-  if AlcoholDrugAbuse_want:
-    AlcoholDrugAbuse_signature
+    if HIV_want:
+      HIV_signature
+    if STD_want:
+      STD_signature
+    if GeneticCounseling_want:
+      GeneticCounseling_signature
+    if SexAssault_want:
+      SexAssault_signature
+    if DV_want:
+      DV_signature
+    if pyschiatric_want:
+      pyschiatric_signature
+    if SW_want:
+      SW_signature
+    if pyschologist_want:
+      pyschologist_signature
+    if AlcoholDrugAbuse_want:
+      AlcoholDrugAbuse_signature
   if doc_select == 'a2p_student':
     message("The interview is over.", "Better luck next time!")
   if Forms_choice["Boston Medical Center"]:
@@ -181,11 +181,13 @@ code: |
   signature_date
   if Forms_choice["Boston Medical Center"]:
     hospital[0].got_result
+    email_sent_ok_BMC
   if Forms_choice["Defenders Generic HIPAA Form"]:
     hospital[1].got_result
+    email_sent_ok_def
   if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
     hospital[2].got_result
-  email_sent_ok
+    email_sent_ok_juv
   #all_done
   #display_fax_results
   
@@ -788,8 +790,24 @@ subquestion: |
   Call the hospital to confirm receipt. 
   
   Be sure to store a copy for your records. You can also download a copy below by clicking on a form to view.  
-
-  ${file_to_fax}
+  % if Forms_choice["Boston Medical Center"]:
+  
+  ${file_to_fax_BMC}
+  
+  % endif
+  
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
+  
+  ${file_to_fax_def}
+    
+  % endif
+  
+  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+  
+  ${file_to_fax_def}
+  
+  % endif
+  
 buttons:
   - Exit: exit
   - Restart: restart
@@ -945,7 +963,7 @@ objects:
   - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
 ---
 code: |
-  data = {'media_url': pdf_url[0],
+  data = {'media_url': Juv_pdf_url,
     'connection_id': get_config('telnyx fax',{}).get('connection id'),
     'to': hospital[2].fax_formatted, 
     'from': get_config('telnyx fax',{}).get('my fax') }
@@ -960,16 +978,22 @@ code: |
                       )
   except DAWebError as e:
     result = e.response_json
-  hospital[0].got_result = True
+  hospital[2].got_result = True
 ---
 code: | 
-  pdf_url[2] = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
+  Juv_pdf_url = file_to_fax_juv.url_for(temporary=True, seconds=90, attachment=True)
+---
+code: | 
+  BMC_pdf_url = file_to_fax_BMC.url_for(temporary=True, seconds=90, attachment=True)
+---
+code: | 
+  def_pdf_url = file_to_fax_def.url_for(temporary=True, seconds=90, attachment=True)
 ---
 objects:
   - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
 ---
 code: |
-  data = {'media_url': pdf_url[0],
+  data = {'media_url': def_pdf_url,
     'connection_id': get_config('telnyx fax',{}).get('connection id'),
     'to': hospital[1].fax_formatted, 
     'from': get_config('telnyx fax',{}).get('my fax') }
@@ -984,16 +1008,16 @@ code: |
                       )
   except DAWebError as e:
     result = e.response_json
-  hospital[0].got_result = True
+  hospital[1].got_result = True
 ---
 code: | 
-  pdf_url[1] = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
+  def_pdf_url = file_to_fax_def.url_for(temporary=True, seconds=90, attachment=True)
 ---
 objects:
   - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
 ---
 code: |
-  data = {'media_url': pdf_url[0],
+  data = {'media_url': BMC_pdf_url,
     'connection_id': get_config('telnyx fax',{}).get('connection id'),
     'to': hospital[0].fax_formatted, 
     'from': get_config('telnyx fax',{}).get('my fax') }
@@ -1011,7 +1035,7 @@ code: |
   hospital[0].got_result = True
 ---
 code: | 
-  pdf_url[0] = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
+  BMC_pdf_url = file_to_fax_BMC.url_for(temporary=True, seconds=90, attachment=True)
 ---
 reload: 10
 id: fax endscreen
@@ -1028,9 +1052,13 @@ subquestion: |
 field: all_done
 ---
 code: |
+ hospital[0].fax_formatted = phone_number_in_e164(hospital[0].fax)
+---
+code: |
   hospital[1].fax_formatted = phone_number_in_e164(hospital[1].fax)
+---
+code: |
   hospital[2].fax_formatted = phone_number_in_e164(hospital[2].fax)
-  hospital[0].fax_formatted = phone_number_in_e164(hospital[0].fax)
 ---
 code: |
   country: US
@@ -1045,7 +1073,7 @@ subquestion: |
 
   Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital[0].name}
 
-  ${file_to_fax}
+  ${file_to_fax_BMC}
 field: hospital[0].got_result
 continue button label: Send fax
 ---
@@ -1059,7 +1087,7 @@ subquestion: |
 
   Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital[1].name}
 
-  ${file_to_fax}
+  ${file_to_fax_def}
 field: hospital[1].got_result
 continue button label: Send fax
 ---
@@ -1072,8 +1100,9 @@ subquestion: |
   Click on the attached file and review the accuracy of all information before proceeding.
 
   Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital[2].name}
-
-  ${file_to_fax}
+  
+  ${file_to_fax_juv}
+  
 field: hospital[2].got_result
 continue button label: Send fax
 ---
@@ -1155,7 +1184,13 @@ buttons:
 event: exit_screen
 ---
 code: | 
-  email_sent_ok = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax])
+  email_sent_ok_BMC = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_BMC])
+---
+code: | 
+  email_sent_ok_juv = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_juv])
+---
+code: | 
+  email_sent_ok_def = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_def])
 ---
 template: fax_copy
 subject: |
@@ -1167,14 +1202,20 @@ content: |
   
   Store a copy for your records. 
 ---
-id: file to fax 
+id: file to fax juv
 code: |
   if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
-    file_to_fax = pdf_concatenate(juvenille_Fax_cover_sheet_attachment.as_pdf(), JDC_HIPAA_Improved_attachment.as_pdf())
+    file_to_fax_juv = pdf_concatenate(juvenille_Fax_cover_sheet_attachment.as_pdf(), JDC_HIPAA_Improved_attachment.as_pdf())
+---
+id: file to fax def
+code: |
   if Forms_choice["Defenders Generic HIPAA Form"]:
-    file_to_fax = pdf_concatenate(defenders_Fax_cover_sheet_attachment.as_pdf(), Defenders_HIPAA.as_pdf())
+    file_to_fax_def = pdf_concatenate(defenders_Fax_cover_sheet_attachment.as_pdf(), Defenders_HIPAA.as_pdf())
+---
+id: file to fax BMC
+code: |
   if Forms_choice["Boston Medical Center"]:
-    file_to_fax = pdf_concatenate(BMC_Fax_cover_sheet_attachment.as_pdf(), BMC_HIPAA.as_pdf())
+    file_to_fax_BMC = pdf_concatenate(BMC_Fax_cover_sheet_attachment.as_pdf(), BMC_HIPAA.as_pdf())
 ---
 id: BMC Fax cover sheet attachment
 attachment:
@@ -1271,7 +1312,7 @@ attachment:
       - "all_records": ${ all_records }
       - "some_records": ${ some_records } 
       - "records_relating": ${ what_records}
-      - "client_signature": ${ client[0].signature_if_final(i) }
+      - "client_signature": ${ client[0].signature }
       - "todays_date__1": ${ today(format='MM/dd/YYYY') }
       - "client_dob": ${ client.birthdate.format('MM/dd/YYY') }
       - "admission_dates": ${ admission_release_dates }
