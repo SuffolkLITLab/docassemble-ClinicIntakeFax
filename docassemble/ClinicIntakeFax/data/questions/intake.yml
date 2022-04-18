@@ -131,6 +131,8 @@ code: |
       pyschologist_signature
     if AlcoholDrugAbuse_want:
       AlcoholDrugAbuse_signature
+    if pyschotherapy_want:
+      pyschotherapy_signature
   if doc_select == 'a2p_student':
     message("The interview is over.", "Better luck next time!")
   if Forms_choice["Boston Medical Center"]:
@@ -182,12 +184,15 @@ code: |
   if Forms_choice["Boston Medical Center"]:
     hospital[0].got_result
     fax_result_BMC
+    email_sent_ok_BMC
   if Forms_choice["Defenders Generic HIPAA Form"]:
     hospital[1].got_result
     fax_result_Def
+    email_sent_ok_def
   if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
     hospital[2].got_result
     fax_result_Juv
+    email_sent_ok_juv
   #all_done
   #display_fax_results
   
@@ -364,6 +369,7 @@ question: |
 fields:
   - note: |
       Please fill in the information for the Hostpital you would like to send the BMC form to.
+      The contact information for BMC can be found at [https://www.bmc.org/services/medical-records](https://www.bmc.org/services/medical-records).
   - Name of Hospital/Medical Institution: hospital[0].name.first
   - Hospital fax number: hospital[0].fax_number
   - code: | 
@@ -411,9 +417,7 @@ question: |
   What court is this case in? 
 fields: 
   - Court: trial_court
-    datatype: combobox
-    code: |
-      sorted((set([str(y) for y in all_courts.filter_courts(["District Court","Boston Municipal Court", "Superior Court"])])))  
+    maxlength: 15    
 ---
 id: what forms
 question: | 
@@ -557,7 +561,7 @@ fields:
     datatype: yesno
   - Psychotherapy Notes: pyschotherapy_want
     datatype: yesno
-  - Alchol and Drug Abuse Records: AlcoholDrugAbuse_want
+  - Alcohol and Drug Abuse Records: AlcoholDrugAbuse_want
     datatype: yesno
 ---
 id: HIV signature
@@ -776,38 +780,21 @@ mandatory: True
 question: |
   Your fax has been sent
 subquestion: | 
-  ##### Successful fax should display "Result: queued" below
+  We attempted to send the below fax(es).  You must call the Hospitals to confirm whether the fax(es) were recieved.
   ***
-  % if result:
-  
-  **Result:** ${ result.get('data',{}).get('status') }
-  
-  % endif
-  
-  ***
-  You will recieve an email with a copy of the sent fax.
-  
-  Call the hospital to confirm receipt. 
-  
-  Be sure to store a copy for your records. You can also download a copy below by clicking on a form to view.  
-  % if Forms_choice["Boston Medical Center"]:
-  
-  ${file_to_fax_BMC}
-  
-  % endif
-  
-  % if Forms_choice["Defenders Generic HIPAA Form"]:
-  
-  ${file_to_fax_def}
     
+  % if Forms_choice["Boston Medical Center"]:
+  ${file_to_fax_BMC}
   % endif
   
   % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
-  
-  ${file_to_fax_def}
-  
+  ${file_to_fax_juv}
   % endif
-  
+    
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
+  ${file_to_fax_def}
+  % endif
+    
 buttons:
   - Exit: exit
   - Restart: restart
@@ -1058,26 +1045,20 @@ subquestion: |
 
   **Below is the response you receieved from the FAX API. "Fax Status:  Queued" indicates the request was successful and the app is working properly**
   
-#  % if Forms_choice["Boston Medical Center"]:
-#    The status of the BMC fax is
-#    ${ fax_result_BMC.status() }.
-#    % endif
-#  
-#  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
-#    % if fax_result_Juv.received():
-#    The Juvenille Defenders Generic HIPAA Form fax was received.
-#    % else:
-#    The status of the Juvenille Defenders Generic HIPAA Form fax is
-#    ${ fax_result_BMC.status() }.
-#    % endif
-#    
-#  % if Forms_choice["Defenders Generic HIPAA Form"]:
-#    % if fax_result_Def.received():
-#    The Defenders Generic HIPAA Form fax was received.
-#    % else:
-#    The status of the Defenders Generic HIPAA Form fax is
-#    ${ fax_result_Def.status() }.
-#    % endif
+  % if Forms_choice["Boston Medical Center"]:
+  The status of the BMC fax is
+  ${ fax_result_BMC.status() }.
+  % endif
+  
+  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+  The status of the Juvenille Defenders Generic HIPAA Form fax is
+  ${ fax_result_BMC.status() }.
+  % endif
+    
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
+  The status of the Defenders Generic HIPAA Form fax is
+  ${ fax_result_Def.status() }.
+  % endif
     
 
 # add button to download the fax that was sent, alternatively - send student attorney an email copy of the fax package- needs to have a screen that tell user what was done with their fax-generate a follow up email with all forms generated
@@ -1216,26 +1197,26 @@ buttons:
   - Fax HIPAA form: use_fax
 event: exit_screen
 
-#---
-#code: | 
-#  email_sent_ok_BMC = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_BMC])
-#---
-#code: | 
-#  email_sent_ok_juv = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_juv])
-#---
-#code: | 
-#  email_sent_ok_def = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_def])
+---
+code: | 
+  email_sent_ok_BMC = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_BMC])
+---
+code: | 
+  email_sent_ok_juv = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_juv])
+---
+code: | 
+  email_sent_ok_def = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_def])
 ---
 
 template: fax_copy
 subject: |
-  Fax sent - ${ client[0] } 
+  Fax Copy 
 content: |
-  Attached is a copy of the fax sent on ${ today(format='MM/dd/YYYY') }.
+  Attached is a copy of the fax you tried to send on ${ today(format='MM/dd/YYYY') }.
   
-  Call the hospital to confirm receipt. 
+  We can not confirm that the fax was recieved by the hospital.  You must call the hospital to confirm receipt. 
   
-  Store a copy for your records. 
+  Store a copy of the attached fax for your records. 
 ---
 id: file to fax juv
 code: |
