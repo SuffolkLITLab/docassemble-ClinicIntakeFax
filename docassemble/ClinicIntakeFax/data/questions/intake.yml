@@ -368,7 +368,7 @@ question: |
   Boston Medical Center Form Information
 fields:
   - note: |
-      Please fill in the information for the Hostpital you would like to send the BMC form to.
+      Please fill in the information for the hospital you would like to send the BMC form to.
       The contact information for BMC can be found at [https://www.bmc.org/services/medical-records](https://www.bmc.org/services/medical-records).
   - Name of Hospital/Medical Institution: hospital[0].name.first
   - Hospital fax number: hospital[0].fax_number
@@ -380,7 +380,7 @@ question: |
   Juvenille Defenders Form Hospital or Medical Institution Information
 fields:
   - note: |
-      Please fill in the information for the Hostpital you would like to send the juvenille defenders form to.
+      Please fill in the information for the hospital you would like to send the juvenille defenders form to.
   - Name of Hospital/Medical Institution: hospital[2].name.first
   - Hospital fax number: hospital[2].fax_number
   - code: | 
@@ -391,7 +391,7 @@ question: |
   Defenders Form Hospital or Medical Institution Information
 fields:
   - note: |
-      Please fill in the information for the Hostpital you would like to send the defenders form to.
+      Please fill in the information for the hospital you would like to send the defenders form to.
   - Name of Hospital/Medical Institution: hospital[1].name.first
   - Hospital fax number: hospital[1].fax_number
   - code: | 
