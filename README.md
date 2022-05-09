@@ -52,8 +52,7 @@ If you would like to add a new form, you will have to do a few things.
 First, you will have to make the form usable using the weaver
 
 Then, you will use the usable template to the package and tell the code what each variable is going to be used as in your code.  
-    Here is an example: 
----
+Here is an example:
 id: Defenders HIPAA
 attachment:
   name: Defenders HIPAA
@@ -75,7 +74,6 @@ attachment:
       - "client_dob": ${ client.birthdate.format('MM/dd/YYY') }
       - "admission_dates": ${ admission_release_dates }
       - "hospital.fax": ${ hospital[1].fax_number }
----
 
 Next, you will have to add your Form as an option to Forms_choice
 
