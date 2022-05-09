@@ -8,7 +8,7 @@ objects:
   - studentattorney: ALPeopleList.using(target_number=1,ask_number=True)
   - client: ALPeopleList.using(target_number=1,ask_number=True)
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
-  - hospital: ALIndividual
+  - hospital: ALPeopleList.using(target_number=1,ask_number=True)
   - fax: Individual
   - supervisor: ALPeopleList.using(target_number=1,ask_number=True)
   - court: DAObject
@@ -16,15 +16,7 @@ objects:
   - accelerator: DAObject
   - users: ALPeopleList
   - docket_numbers: DAList.using(there_are_any=True)
----
-id: clinic choice
-question: |
-  Select your clinic
-field: doc_select
-choices:
-  - Juvenile Defenders: jdc_student
-  - Defenders: defenders_student
-  - Accelerator to Practice: a2p_student
+  - courts: DAList.using(auto_gather=False, target_number=1, gathered=True)
 ---
 metadata:
   title: |
@@ -69,6 +61,11 @@ code: |
 code: |
   al_form_type = 'other_form'
 ---
+code: |
+  hospital.append("BMC")
+  hospital.append("Defenders")
+  hospital.append("Juvenile")
+---
 sections:
   - review_JDC_HIPAA_Improved: Review your answers
 ---
@@ -97,13 +94,62 @@ comment: |
 mandatory: True
 code: |
   JDC_HIPAA_Improved_intro
-  doc_select = 'jdc_student'
+  doc_select
   studentattorney.gather()
+  Forms_choice
+  if Forms_choice["Defenders Generic HIPAA Form"]+Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+    parent_choice
   #supervisor.gather()
   client.gather()
-  if doc_select == 'jdc_student':
+  if parent_choice:
     parent.gather()
-  #client[0].address.address
+  if parent_choice:
+    parent_relationship
+  if Forms_choice["Defenders Generic HIPAA Form"]: 
+    trial_court
+    records_choice
+    all_records
+  if Forms_choice["Boston Medical Center"]:
+    pathology_reports__1
+  if Forms_choice["Boston Medical Center"]:
+    HIV_want
+    if HIV_want:
+      HIV_signature
+    if STD_want:
+      STD_signature
+    if GeneticCounseling_want:
+      GeneticCounseling_signature
+    if SexAssault_want:
+      SexAssault_signature
+    if DV_want:
+      DV_signature
+    if pyschiatric_want:
+      pyschiatric_signature
+    if SW_want:
+      SW_signature
+    if pyschologist_want:
+      pyschologist_signature
+    if AlcoholDrugAbuse_want:
+      AlcoholDrugAbuse_signature
+    if pyschotherapy_want:
+      pyschotherapy_signature
+  if doc_select == 'a2p_student':
+    message("The interview is over.", "Better luck next time!")
+  if Forms_choice["Boston Medical Center"]:
+    mr_number
+    pickup
+    mail_to__1
+  if pickup == False:
+     mailwho
+  if Forms_choice["Boston Medical Center"]:
+    file_type
+    electronic_preference__1 
+    
+  client[0].address.address
+  if alternativeaddress:
+    if Forms_choice["Boston Medical Center"]: 
+      client[0].mailing_address.address
+  client[0].phone
 
   #supervisor.name.first
   #client.name.first
@@ -125,15 +171,28 @@ code: |
   #  parent[0].signature
   #studentattorney.signature
   #supervisor.signature
-  #intake_finished
   preview_signed
   ok_to_finish
   #user_has_privilege('clinic')
-  hospital.name.first
-  fax_phone
+  if Forms_choice["Boston Medical Center"]:
+    hospital[0].name.first
+  if Forms_choice["Defenders Generic HIPAA Form"]:
+    hospital[1].name.first
+  if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+    hospital[2].name.first
   signature_date
-  got_result
-  email_sent_ok
+  if Forms_choice["Boston Medical Center"]:
+    hospital[0].got_result
+    fax_result_BMC
+    email_sent_ok_BMC
+  if Forms_choice["Defenders Generic HIPAA Form"]:
+    hospital[1].got_result
+    fax_result_Def
+    email_sent_ok_def
+  if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+    hospital[2].got_result
+    fax_result_Juv
+    email_sent_ok_juv
   #all_done
   #display_fax_results
   
@@ -160,8 +219,21 @@ question: |
 subquestion: | 
   This interview is for clinical students at Suffolk University Law School. If you believe you should have access to this application contact your clinic director or email suffolklitlab@gmail.com
 ---
+id: clinic choice
+question: |
+  Select your clinic
+field: doc_select
+choices:
+  - Juvenile Defenders: jdc_student
+  - Defenders: defenders_student
+  - Accelerator to Practice: a2p_student
+---
+id: signature fields 
 code: |
-  signature_fields = ["client[0].signature", "parent[0].signature"]
+  if parent_choice:
+    signature_fields = ["client[0].signature", "parent[0].signature"]
+  else:
+    signature_fields = ["client[0].signature"]
 ---
 id: Main intro screen
 decoration: fax
@@ -255,7 +327,7 @@ question: |
 fields:
   - code: |
       client[0].name_fields()
-  - Birthdate: client.dob
+  - Birthdate: client.birthdate
     datatype: birthdate
 ---
 id: legal gaurdian 
@@ -268,6 +340,13 @@ question: |
 fields:
   - code: |
       parent[0].name_fields()
+---
+id: guardian relationship
+question: | 
+  Please indicate the guardian's relationship to your client
+fields: 
+  - no label: parent_relationship
+    hint: e.g., parent
 ---
 id: end of representation
 question: |
@@ -284,30 +363,39 @@ subquestion: |
 mandatory: True
 field: advise_client
 ---
-id: hospital information
+id: BMC hospital information
 question: |
-  Hospital or Medical Institution Information
+  Boston Medical Center Form Information
 fields:
-  - Name of Hospital/Medical Institution: hospital.name.first
-  - Hospital fax number: hospital.fax
+  - note: |
+      Please fill in the information for the hospital you would like to send the BMC form to.
+      The contact information for BMC can be found at [https://www.bmc.org/services/medical-records](https://www.bmc.org/services/medical-records).
+  - Name of Hospital/Medical Institution: hospital[0].name.first
+  - Hospital fax number: hospital[0].fax_number
   - code: | 
-      hospital.address_fields()
+      hospital[0].address_fields()
 ---
-#id: Client info
-#question: |
-#  Client's information
-#fields:
-#  - First Name: client.name.first
-#  - Last Name: client.name.last
-#  - Client Birthday: client.dob
-#    datatype: birthdate
+id: juvenille hospital information
+question: |
+  Juvenille Defenders Form Hospital or Medical Institution Information
+fields:
+  - note: |
+      Please fill in the information for the hospital you would like to send the juvenille defenders form to.
+  - Name of Hospital/Medical Institution: hospital[2].name.first
+  - Hospital fax number: hospital[2].fax_number
+  - code: | 
+      hospital[2].address_fields()
 ---
-#mandatory: True
-#code: |
-  #if user_logged_in():
-    #goodbye_page
-  #else:
-    #sign_in_page
+id: defenders hospital information
+question: |
+  Defenders Form Hospital or Medical Institution Information
+fields:
+  - note: |
+      Please fill in the information for the hospital you would like to send the defenders form to.
+  - Name of Hospital/Medical Institution: hospital[1].name.first
+  - Hospital fax number: hospital[1].fax_number
+  - code: | 
+      hospital[1].address_fields()
 ---
 #id: supervisor info
 #question: |
@@ -321,13 +409,233 @@ fields:
 #    datatype: email
 #continue button field: supervisor_info
 ---
-#id: Legal Guardian information
-#question: |
-#  Legal guardian information
-#fields:
-#  - First name: parent.name.first
-#  - Last name: parent.name.last
-#continue button field: guardian_info
+comment: |
+  ############# START OF DEFENDERS CLINIC SPECIFIC INFORMATION ###########
+---
+id: court defenders 
+question: | 
+  What court is this case in? 
+fields: 
+  - Court: trial_court
+    maxlength: 15    
+---
+id: what forms
+question: | 
+  Which HIPAA forms would you like?
+fields:
+  - note: |
+      Our generic HIPAA forms have been acceptepted by these hospitals in the past:
+      
+      * SouthBay Community Services
+      
+      Our generic HIPAA forms have not been acceptepted by these hospitals in the past:
+      
+      * Boston Medical Center
+      
+      Please check off which forms you would like
+  - "HIPAA forms.": Forms_choice
+    datatype: checkboxes
+    choices:
+      - Defenders Generic HIPAA Form
+      - Juvenille Defenders Generic HIPAA Form
+      - Boston Medical Center
+---
+id: parent sign
+question: | 
+  Will a guardian need to sign for these records?
+yesno: parent_choice
+---
+id: what records
+question: | 
+  Do you want to request all record information or only certain records?
+fields:
+  - Type: records_choice
+    input type: radio
+    choices:
+      - All Records: True
+      - Only Some Records: False
+  - Description of records you would like: what_records
+    hide if: records_choice
+---
+code: |
+  if records_choice:
+    some_records = False
+    all_records = True
+  else:
+    some_records = True
+    all_records = False
+---
+id: specific records
+question: | 
+  Please indicate if you would like these specific types of records.
+fields: 
+  - Pathology Reports: pathology_reports__1
+    datatype: yesno
+  - Description of what pathology records you would like: pathology_reports_description__1
+    show if: 
+      variable: pathology_reports__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - Consultation Reports: consultation_reports__1
+    datatype: yesno
+  - Description of what consultation reports you would like: consultation_reports_description__1
+    show if: 
+      variable: consultation_reports__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - Medication Records: medication_records__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what medication records you would like: medication_records_description__1
+    show if: 
+      variable: medication_records__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - Clinic Notes: clinic_notes__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what clinic notes you would like: clinic_notes_description__1
+    show if: 
+      variable: clinic_notes__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - ED Records: ED_records__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what ED records you would like: ED_records_description__1
+    show if: 
+      variable: ED_records__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - MRI reports: MRI_reports__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what MRI reports you would like: MRI_reports_description__1
+    show if: 
+      variable: MRI_reports__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+    
+  - Other Informaiton: other_information__1
+    datatype: yesno
+    hint: e.g., all records
+  - Description of what other_information you would like: other_information_description__1
+    show if: 
+      variable: other_information__1
+      is: true
+    hint: e.g., all records
+    maxlength: 20
+---
+id: Sensitive Want
+question: | 
+  Please indicate if you would like records that contain the following.  
+subquestion: |
+  Please note that your client will have to initial for each of the below you request.
+fields:
+  - HIV Test Results: HIV_want
+    datatype: yesno
+  - STDS: STD_want
+    datatype: yesno
+  - Genetic Counseling: GeneticCounseling_want
+    datatype: yesno
+  - Sexual Assault: SexAssault_want
+    datatype: yesno
+  - Domestic Violence: DV_want
+    datatype: yesno
+  - Psychiatric Records or Information: pyschiatric_want
+    datatype: yesno
+  - Social Work Counseling/Therapy: SW_want
+    datatype: yesno
+  - Proffessional services of a licensed psychologist: pyschologist_want
+    datatype: yesno
+  - Psychotherapy Notes: pyschotherapy_want
+    datatype: yesno
+  - Alcohol and Drug Abuse Records: AlcoholDrugAbuse_want
+    datatype: yesno
+---
+id: HIV signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request HIV records.  Please initial below to allow.
+signature: HIV_signature
+---
+id: STD signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request STD records.  Please initial below to allow.
+signature: STD_signature
+---
+id: GeneticCounseling signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Genetic Counseling records.  Please initial below to allow.
+signature: GeneticCounseling_signature
+---
+id: SexAssault signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Sex Assault records.  Please initial below to allow.
+signature: SexAssault_signature
+---
+id: DV signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Domestic Violence records.  Please initial below to allow.
+signature: DV_signature
+---
+id: pyschiatric signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Psychiatric Records or Information.  Please initial below to allow.
+signature: pyschiatric_signature
+---
+id: SW signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Social Work Counseling or Therapy records.  Please initial below to allow.
+signature: SW_signature
+---
+id: pyschologist signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request records relating to services of a licensed psychologist.  Please initial below to allow.
+signature: pyschologist_signature
+---
+id: pyschotherapy signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Psychotherapy notes.  Please initial below to allow.
+signature: pyschotherapy_signature
+---
+id: Alchohol Drug Signature
+question: |
+  ${ studentattorney[0].name }, please have ${ client[0].name } initial below.
+subquestion: |
+  A hospital requires your initials to request Alchol and Drug Abuse records.  Please initial below to allow.
+signature: AlcoholDrugAbuse_signature
+---
+comment: |
+ ########### END OF DEFENDERS CLINIC SPECIFIC INFORMATION END ##############
 ---
 id: supervisor signature
 question: |
@@ -368,10 +676,10 @@ under: |
 #    button: |
 #      **Client name full**:
 #      ${ client.name }
-#  - Edit: client.dob
+#  - Edit: client.birthdate
 #    button: |
 #      **Client dob**:
-#      ${ client.dob }
+#      ${ client.birthdate }
 #  - Edit: todays.date
 #    button: |
 #      **Date of todays**:
@@ -403,26 +711,64 @@ under: |
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
   - al_court_bundle: ALDocumentBundle.using(elements=[JDC_HIPAA_Improved_attachment, Authorization_For_Representation_attachment], filename="JDC_HIPAA_Improved.pdf", title="All forms to download for your records")
-  #- JDC_fax: DAStaticFile.using(filename='data/templates/JDC_HIPAA_Improved.pdf') 
-  #creates a url for the completed form to "live", and then this
-  - fax_package: ALDocumentBundle.using(elements=[Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment], filename="fax_package.pdf", title="HIPAA fax")
+  - fax_package: ALDocumentBundle.using(elements=[Fax_cover_sheet_attachment, JDC_HIPAA_Improved_attachment], filename="juvenille_fax_package.pdf", title="HIPAA fax")
+  - Defender_Package: ALDocumentBundle.using(elements=[Defenders_HIPAA], filename="defenders_fax_package.pdf", title="HIPAA fax")
+  - BMC_Package: ALDocumentBundle.using(elements=[BMC_HIPAA], filename="BMC_fax_package.pdf", title="HIPAA fax")
 ---
 objects: 
-  - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)
-  - Fax_cover_sheet_attachment: ALDocument.using(title="This is the intro", filename="fax_cover_sheet.pdf", enabled=True, has_addendum=False)
+  - JDC_HIPAA_Improved_attachment: ALDocument.using(title="This is the intro", filename="JDC_HIPAA_Improved.pdf", enabled=True, has_addendum=False)  
+  - BMC_Fax_cover_sheet_attachment: ALDocument.using(title="This is the intro", filename="BMC_fax_cover_sheet.pdf", enabled=True, has_addendum=False)  
+  - juvenille_Fax_cover_sheet_attachment: ALDocument.using(title="This is the intro", filename="juvenille_fax_cover_sheet.pdf", enabled=True, has_addendum=False)
+  - defenders_Fax_cover_sheet_attachment: ALDocument.using(title="This is the intro", filename="defenders_fax_cover_sheet.pdf", enabled=True, has_addendum=False)
+  - Defenders_HIPAA: ALDocument.using(title="Defenders HIPAA", filename="Defenders_HIPAA.pdf", enabled=True, has_addendum=False) 
+  - BMC_HIPAA: ALDocument.using(title="BMC_HIPAA", filename="BMC_HIPAA.pdf", enabled=True, has_addendum=False)
+---
+id:  BMC fax cover sheet 
+question: |
+  BMC Form Fax Cover Sheet
+subquestion: |
+  The information below will be included on the cover sheet of your BMC form fax.
+fields:
+  - From phone number: BMC_fax_phone
+  - Fax subject: BMC_fax_subject
+    maxlength: 33
+  - Fax comment: BMC_fax_comment
+    default: |
+      We are requesting a full and complete copy of the ${ client[0].name }'s medical records. Enclosed please find a HIPAA release for these records for the above named person. I am specifically requesting any and all records on file with ${ hospital[0].name } related to ${ client[0].name }. 
+      
+      Thank you in advance and please do not hesitate to contact me with any questions. 
+    datatype: area
+    maxlength: 902
+---
+id:  defenders fax cover sheet 
+question: |
+  Defenders Form Fax Cover Sheet
+subquestion: |
+  The information below will be included on the cover sheet of your Defenders Form fax.
+fields:
+  - From phone number: defenders_fax_phone
+  - Fax subject: defenders_fax_subject
+    maxlength: 33
+  - Fax comment: defenders_fax_comment
+    default: |
+      We are requesting a full and complete copy of the ${ client[0].name }'s medical records. Enclosed please find a HIPAA release for these records for the above named person. I am specifically requesting any and all records on file with ${ hospital[1].name } related to ${ client[0].name }. 
+      
+      Thank you in advance and please do not hesitate to contact me with any questions. 
+    datatype: area
+    maxlength: 902
 ---
 id:  fax cover sheet 
 question: |
-  Fax Cover Sheet
+  Juvenille Defenders Fax Cover Sheet
 subquestion: |
-  The information below will be included on the cover sheet of your fax to the hospital
+  The information below will be included on the cover sheet of your Juvenille Defenders Form fax.
 fields:
-  - From phone number: fax_phone
-  - Fax subject: fax_subject
+  - From phone number: juvenille_fax_phone
+  - Fax subject: juvenille_fax_subject
     maxlength: 33
-  - Fax comment: fax_comment
+  - Fax comment: juvenille_fax_comment
     default: |
-      We are requesting a full and complete copy of the ${ client[0].name }'s medical records. Enclosed please find a HIPAA release for these records for the above named person. I am specifically requesting any and all records on file with ${ hospital.name } related to ${ client[0].name }. 
+      We are requesting a full and complete copy of the ${ client[0].name }'s medical records. Enclosed please find a HIPAA release for these records for the above named person. I am specifically requesting any and all records on file with ${ hospital[2].name } related to ${ client[0].name }. 
       
       Thank you in advance and please do not hesitate to contact me with any questions. 
     datatype: area
@@ -434,22 +780,21 @@ mandatory: True
 question: |
   Your fax has been sent
 subquestion: | 
-  ##### Successful fax should display "Result: queued" below
+  We attempted to send the below fax(es).  You must call the Hospitals to confirm whether the fax(es) were recieved.
   ***
-  % if result:
-  
-  **Result:** ${ result.get('data',{}).get('status') }
-  
+    
+  % if Forms_choice["Boston Medical Center"]:
+  ${file_to_fax_BMC}
   % endif
   
-  ***
-  You will recieve an email with a copy of the fax sent to ${ hospital.name }.
-  
-  Call the hospital to confirm receipt. 
-  
-  Be sure to store a copy for your records. You can also download a copy below by clicking on a form to view.  
-
-  ${file_to_fax}
+  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+  ${file_to_fax_juv}
+  % endif
+    
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
+  ${file_to_fax_def}
+  % endif
+    
 buttons:
   - Exit: exit
   - Restart: restart
@@ -485,7 +830,45 @@ question: |
   What is ${ client[0] }'s address?
 fields:
   - code: |
-      client[0].address_fields()   
+      client[0].address_fields()
+  - "Does your client have another address?": alternativeaddress
+    datatype: yesnoradio
+    show if:
+      code: |
+        Forms_choice["Boston Medical Center"]
+    required: False
+---
+code: |
+  if Forms_choice["Boston Medical Center"]:
+    Blah
+  else:
+    alternativeaddress = False    
+---
+code: |
+  client[i].mailing_address.address
+  client[i].mailing_address.city
+  client[i].mailing_address.zip
+  client[i].mailing_address.complete = True
+---
+id: client alternative address
+generic object: ALIndividual
+sets:
+  - client[0].mailing_address.address
+  - client[0].mailing_address.city
+  - client[0].mailing_address.zip
+question: |
+  What is ${ client[0] }'s alternative address?
+fields:
+  - code: |
+      client[0].mailing_address.address_fields()
+---
+id: client contact
+generic object: ALIndividual
+question: |
+  What is ${ client[0] }'s phone number?
+fields:
+     - no label: client[0].phone  
+       required: False
 ---
 question: |
   Do you have a docket number for this case?
@@ -513,29 +896,146 @@ fields:
   - Case number: school_case
     show if: has_school_case
 ---
-objects:
-  - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
+continue button field: mr_number
+id: Medical Record Number
+question: |
+  What is your client's MR number?
+fields:
+  - no label: client_MR_number
+    datatype: text
+    required: false
+---
+continue button field: pickup_type
+id: Pickup type
+question: How would you like to get your records?
+field: pickup
+buttons:
+  - Pick up: True
+  - Mail: False
 ---
 code: |
-  data = {'media_url': pdf_url,
-    'connection_id': get_config('telnyx fax',{}).get('connection id'),
-    'to': hospital_fax_formatted, 
-    'from': get_config('telnyx fax',{}).get('my fax') }
-  headers = {'Authorization': get_config('telnyx fax',{}).get('api key'),
-             'Content-Type': 'application/x-www-form-urlencoded'
-             }
-  try:
-    result = web.post('faxes',
-                      data=data,
-                      headers=headers,
-                      json_body=False,
-                      )
-  except DAWebError as e:
-    result = e.response_json
-  got_result = True
+  if pickup:
+    mail_to__1 = False
+    pickup__1 = True
+  else:
+    mail_to__1 = True
+    pickup__1 = False
 ---
-code: | 
-  pdf_url = file_to_fax.url_for(temporary=True, seconds=90, attachment=True)
+continue button field: pickup_type
+id: Pickup type
+question: Who would you like to mail the records to?
+fields:
+  - Name: mailwho
+    hint: Joan Luke
+  - Address (one line): mailaddress
+    hint: 120 Tremont St, Boston, MA 02108
+---
+continue button field: files_type
+id: Pickup type
+question: What format would you like the records in?
+field: file_type
+buttons:
+  - Paper: True
+  - Electronic: False
+---
+code: |
+  if file_type:
+    electronic_preference__1 = False
+    paper_preference__1 = True
+  else:
+    electronic_preference__1 = True
+    paper_preference__1 = False
+---
+code: |
+  if Forms_choice["Boston Medical Center"]:
+    fax_result_BMC = send_fax(hospital[0], file_to_fax_BMC)
+---
+code: |
+  if Forms_choice["Defenders Generic HIPAA Form"]:
+    fax_result_Def = send_fax(hospital[1], file_to_fax_def) 
+---
+code: |  
+  if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+    fax_result_Juv = send_fax(hospital[2], file_to_fax_juv)
+---
+#---
+#objects:
+#  - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
+#---
+#code: |
+#  data = {'media_url': Juv_pdf_url,
+#    'connection_id': get_config('telnyx fax',{}).get('connection id'),
+#    'to': hospital[2].fax_formatted, 
+#    'from': get_config('telnyx fax',{}).get('my fax') }
+#  headers = {'Authorization': get_config('telnyx fax',{}).get('api key'),
+#             'Content-Type': 'application/x-www-form-urlencoded'
+#             }
+#  try:
+#    result = web.post('faxes',
+#                      data=data,
+#                      headers=headers,
+#                      json_body=False,
+#                      )
+#  except DAWebError as e:
+#    result = e.response_json
+#  hospital[2].got_result = True
+#---
+#code: | 
+#  Juv_pdf_url = file_to_fax_juv.url_for(temporary=True, seconds=90, attachment=True)
+#---
+#code: | 
+#  BMC_pdf_url = file_to_fax_BMC.url_for(temporary=True, seconds=90, attachment=True)
+#---
+#code: | 
+#  def_pdf_url = file_to_fax_def.url_for(temporary=True, seconds=90, attachment=True)
+#---
+#objects:
+#  - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
+#---
+#code: |
+#  data = {'media_url': def_pdf_url,
+#    'connection_id': get_config('telnyx fax',{}).get('connection id'),
+#    'to': hospital[1].fax_formatted, 
+#    'from': get_config('telnyx fax',{}).get('my fax') }
+#  headers = {'Authorization': get_config('telnyx fax',{}).get('api key'),
+#             'Content-Type': 'application/x-www-form-urlencoded'
+#             }
+#  try:
+#    result = web.post('faxes',
+#                      data=data,
+#                      headers=headers,
+#                      json_body=False,
+#                      )
+#  except DAWebError as e:
+#    result = e.response_json
+#  hospital[1].got_result = True
+#---
+#code: | 
+#  def_pdf_url = file_to_fax_def.url_for(temporary=True, seconds=90, attachment=True)
+#---
+#objects:
+#  - web: DAWeb.using(base_url='https://api.telnyx.com/v2', json_body=False, on_failure='raise')
+#---
+#code: |
+#  data = {'media_url': BMC_pdf_url,
+#    'connection_id': get_config('telnyx fax',{}).get('connection id'),
+#    'to': hospital[0].fax_formatted, 
+#    'from': get_config('telnyx fax',{}).get('my fax') }
+#  headers = {'Authorization': get_config('telnyx fax',{}).get('api key'),
+#             'Content-Type': 'application/x-www-form-urlencoded'
+#             }
+#  try:
+#    result = web.post('faxes',
+#                      data=data,
+#                      headers=headers,
+#                      json_body=False,
+#                      )
+#  except DAWebError as e:
+#    result = e.response_json
+#  hospital[0].got_result = True
+#---
+#code: | 
+#  BMC_pdf_url = file_to_fax_BMC.url_for(temporary=True, seconds=90, attachment=True)
 ---
 reload: 10
 id: fax endscreen
@@ -544,73 +1044,129 @@ question: |
 subquestion: |
 
   **Below is the response you receieved from the FAX API. "Fax Status:  Queued" indicates the request was successful and the app is working properly**
-
-  ${ result.get('data').get('status') }
+  
+  % if Forms_choice["Boston Medical Center"]:
+  The status of the BMC fax is
+  ${ fax_result_BMC.status() }.
+  % endif
+  
+  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+  The status of the Juvenille Defenders Generic HIPAA Form fax is
+  ${ fax_result_BMC.status() }.
+  % endif
+    
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
+  The status of the Defenders Generic HIPAA Form fax is
+  ${ fax_result_Def.status() }.
+  % endif
+    
 
 # add button to download the fax that was sent, alternatively - send student attorney an email copy of the fax package- needs to have a screen that tell user what was done with their fax-generate a follow up email with all forms generated
 
 field: all_done
----
-code: |
-  hospital_fax_formatted = phone_number_in_e164(hospital.fax)
+#---
+#code: |
+# hospital[0].fax_formatted = phone_number_in_e164(hospital[0].fax)
+#---
+#code: |
+#  hospital[1].fax_formatted = phone_number_in_e164(hospital[1].fax)
+#---
+#code: |
+#  hospital[2].fax_formatted = phone_number_in_e164(hospital[2].fax)
 ---
 code: |
   country: US
 ---
-id: send fax
+id: BMC send fax
 question: |
   **WARNING:** You are about to send a fax.
 subquestion: |
-  Your fax will be sent to ${hospital.name} at ${hospital.fax}
+  Your fax will be sent to ${hospital[0].name} at ${hospital[0].fax_number}
 
   Click on the attached file and review the accuracy of all information before proceeding.
 
-  Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital.name}
+  Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital[0].name}
 
-  ${file_to_fax}
-field: got_result
+  ${file_to_fax_BMC}
+field: hospital[0].got_result
 continue button label: Send fax
 ---
-id: intake forms complete
+id: defenders send fax
 question: |
-  Your intake forms are ready.
-attachment code: JDC_HIPAA_Improved_attachment
+  **WARNING:** You are about to send a fax.
 subquestion: |
-  Click on a form to view. Scroll down to get your forms.
+  Your fax will be sent to ${hospital[1].name} at ${hospital[1].fax_number}
 
-  ${JDC_HIPAA_Improved_attachment}
+  Click on the attached file and review the accuracy of all information before proceeding.
 
-  ${Authorization_For_Representation_attachment}
+  Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital[1].name}
 
-  ${Notice_of_Appearance_and_Disclosure_attachment}
-continue button field: intake_finished
-continue button label: Fax HIPAA 
+  ${file_to_fax_def}
+field: hospital[1].got_result
+continue button label: Send fax
 ---
-id: intake forms complete
+id: juvinille send fax
+question: |
+  **WARNING:** You are about to send a fax.
+subquestion: |
+  Your fax will be sent to ${hospital[2].name} at ${hospital[2].fax_number}
+
+  Click on the attached file and review the accuracy of all information before proceeding.
+
+  Click **Send fax** to fax ${client[0].name}'s HIPAA Release to ${hospital[2].name}
+  
+  ${file_to_fax_juv}
+  
+field: hospital[2].got_result
+continue button label: Send fax
+---
+id: preview before signing
 question: |
   Preview your forms
 subquestion: |
   Click on a form to view. 
 
-  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='preview')} 
-#${Authorization_For_Representation_attachment}
+  % if Forms_choice["Boston Medical Center"]:
+  ${ BMC_HIPAA.as_pdf(key='preview')} 
+  % endif 
+  
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
+  ${ Defenders_HIPAA.as_pdf(key='preview')} 
+  % endif 
 
-#${Notice_of_Appearance_and_Disclosure_attachment}
-#${JDC_HIPAA_Improved_attachment}
+  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='preview')} 
+  % endif 
+
 continue button field: preview_intake 
 ---
 id: intake forms signed
 question: |
   View your signed forms
 subquestion: |
-  Click on a form to view. 
 
-  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='final')} 
-#${Authorization_For_Representation_attachment}
 
-#${Notice_of_Appearance_and_Disclosure_attachment}
-#${JDC_HIPAA_Improved_attachment}
-continue button field: preview_signed 
+  % if Forms_choice["Boston Medical Center"]:
+  ${ BMC_HIPAA.as_pdf(key='preview')} 
+  ${ BMC_Package.download_list_html() }
+  ${ BMC_Package.send_button_html() } 
+  % endif 
+  
+  % if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+  ${ JDC_HIPAA_Improved_attachment.as_pdf(key='preview')} 
+  % endif 
+  
+  % if Forms_choice["Defenders Generic HIPAA Form"]:
+  ${ Defender_Package.as_pdf(key='preview')} 
+  ${ Defender_Package.download_list_html() }
+  ${ Defender_Package.send_button_html() }
+  
+  % endif 
+  
+
+  
+continue button field: preview_signed
+continue button label: Continue to Send Fax
 ---
 id: use forms
 question: |
@@ -640,41 +1196,101 @@ buttons:
   - Logout: logout
   - Fax HIPAA form: use_fax
 event: exit_screen
+
 ---
 code: | 
-  email_sent_ok = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax])
+  email_sent_ok_BMC = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_BMC])
 ---
+code: | 
+  email_sent_ok_juv = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_juv])
+---
+code: | 
+  email_sent_ok_def = send_email(to=studentattorney[0].email, template=fax_copy, attachments=[file_to_fax_def])
+---
+
 template: fax_copy
 subject: |
-  Fax sent - ${ client[0] } 
+  Fax Copy 
 content: |
-  Attached is a copy of the fax sent on ${ today(format='MM/dd/YYYY') } to ${ hospital.name } at ${ hospital_fax_formatted }
+  Attached is a copy of the fax you tried to send on ${ today(format='MM/dd/YYYY') }.
   
-  Call the hospital to confirm receipt. 
+  We can not confirm that the fax was recieved by the hospital.  You must call the hospital to confirm receipt. 
   
-  Store a copy for your records. 
+  Store a copy of the attached fax for your records. 
 ---
-code: 
-  file_to_fax = pdf_concatenate(Fax_cover_sheet_attachment.as_pdf(), JDC_HIPAA_Improved_attachment.as_pdf())
+id: file to fax juv
+code: |
+  if Forms_choice["Juvenille Defenders Generic HIPAA Form"]:
+    file_to_fax_juv = pdf_concatenate(juvenille_Fax_cover_sheet_attachment.as_pdf(), JDC_HIPAA_Improved_attachment.as_pdf())
 ---
-id: Fax cover sheet attachment
+id: file to fax def
+code: |
+  if Forms_choice["Defenders Generic HIPAA Form"]:
+    file_to_fax_def = pdf_concatenate(defenders_Fax_cover_sheet_attachment.as_pdf(), Defenders_HIPAA.as_pdf())
+---
+id: file to fax BMC
+code: |
+  if Forms_choice["Boston Medical Center"]:
+    file_to_fax_BMC = pdf_concatenate(BMC_Fax_cover_sheet_attachment.as_pdf(), BMC_HIPAA.as_pdf())
+---
+id: BMC Fax cover sheet attachment
 attachment:
-  name: Fax_cover_sheet_attachment
-  variable name: Fax_cover_sheet_attachment[i]
-  filename: Fax_cover_sheet
+  name: BMC_Fax_cover_sheet_attachment
+  variable name: BMC_Fax_cover_sheet_attachment[i]
+  filename: BMC_Fax_cover_sheet
   skip undefined: True
-  pdf template file: Fax_cover_sheet.pdf
+  pdf template file: BMC_Fax_cover_sheet.pdf
   editable: False
   fields:
-      - "hospital.name": ${ hospital.name }
+      - "hospital.name": ${ hospital[0].name }
       - "student_attorney": ${ studentattorney[0].name }
-      - "hospital.fax": ${ hospital.fax }
+      - "hospital.fax": ${ hospital[0].fax_number }
       - "fax_from": ${ +16177520995 }
-      - "fax_phone": ${ fax_phone }
-      - "hospital.phone": ${ hospital.phone }
+      - "fax_phone": ${ BMC_fax_phone }
+      - "hospital.phone": ${ hospital[0].phone }
       - "todays.date": ${ today(format='MM/dd/YYYY') }
-      - "fax_subject": ${ fax_subject }
-      - "fax_comment": ${ fax_comment } 
+      - "fax_subject": ${ BMC_fax_subject }
+      - "fax_comment": ${ BMC_fax_comment } 
+# on cover sheet make from_fax the clinic's fax number
+---
+id: defenders Fax cover sheet attachment
+attachment:
+  name: defenders_Fax_cover_sheet_attachment
+  variable name: defenders_Fax_cover_sheet_attachment[i]
+  filename: defenders_Fax_cover_sheet
+  skip undefined: True
+  pdf template file: defenders_Fax_cover_sheet.pdf
+  editable: False
+  fields:
+      - "hospital.name": ${ hospital[1].name }
+      - "student_attorney": ${ studentattorney[0].name }
+      - "hospital.fax": ${ hospital[1].fax_number }
+      - "fax_from": ${ +16177520995 }
+      - "fax_phone": ${ defenders_fax_phone }
+      - "hospital.phone": ${ hospital[1].phone }
+      - "todays.date": ${ today(format='MM/dd/YYYY') }
+      - "fax_subject": ${ defenders_fax_subject }
+      - "fax_comment": ${ defenders_fax_comment } 
+# on cover sheet make from_fax the clinic's fax number
+---
+id: juvenille Fax cover sheet attachment
+attachment:
+  name: juvenille_Fax_cover_sheet_attachment
+  variable name: juvenille_Fax_cover_sheet_attachment[i]
+  filename: juvenille_Fax_cover_sheet
+  skip undefined: True
+  pdf template file: juvenille_Fax_cover_sheet.pdf
+  editable: False
+  fields:
+      - "hospital.name": ${ hospital[2].name }
+      - "student_attorney": ${ studentattorney[0].name }
+      - "hospital.fax": ${ hospital[2].fax_number }
+      - "fax_from": ${ +16177520995 }
+      - "fax_phone": ${ juvenille_fax_phone }
+      - "hospital.phone": ${ hospital[2].phone }
+      - "todays.date": ${ today(format='MM/dd/YYYY') }
+      - "fax_subject": ${ juvenille_fax_subject }
+      - "fax_comment": ${ juvenille_fax_comment } 
 # on cover sheet make from_fax the clinic's fax number
 ---
 attachment:
@@ -689,12 +1305,101 @@ attachment:
       - "client_name__2": ${ client[0].name }
       - "parent_name": ${ parent[0].name }
       - "student_attorney": ${ studentattorney[0].name }
-      - "client_dob": ${ client.dob.format() }
+      - "client_dob": ${ client.birthdate.format() }
       - "todays_date__1": ${ today(format='MM/dd/YYYY') }
       - "todays_date__2": ${ today(format='MM/dd/YYYY') }  
       - "todays_date__3": ${ today(format='MM/dd/YYYY') }  
       - "client_signature": ${ client[0].signature_if_final(i) }
       - "parent_signature": ${ parent[0].signature_if_final(i) }
+---
+id: Defenders HIPAA
+attachment:
+  name: Defenders HIPAA
+  variable name: Defenders_HIPAA[i]
+  filename: Defenders_HIPAA
+  skip undefined: True
+  pdf template file: Defenders_Clinic_HIPAA.pdf
+  editable: False
+  fields:
+      - "client_name__1": ${ client[0].name }
+      - "student_attorney": ${ studentattorney[0].name }
+      - "hospital.name": ${ hospital[1].name }
+      - "trial_court": ${ trial_court } 
+      - "all_records": ${ all_records }
+      - "some_records": ${ some_records } 
+      - "records_relating": ${ what_records}
+      - "client_signature": ${ client[0].signature }
+      - "todays_date__1": ${ today(format='MM/dd/YYYY') }
+      - "client_dob": ${ client.birthdate.format('MM/dd/YYY') }
+      - "admission_dates": ${ admission_release_dates }
+      - "hospital.fax": ${ hospital[1].fax_number }
+---
+id: BMC HIPAA
+attachment:
+  name: BMC HIPAA
+  variable name: BMC_HIPAA[i]
+  filename: BMC_HIPAA
+  skip undefined: True
+  pdf template file: BMC_HIPAA.pdf
+  editable: False
+  fields:
+      - "client_name_last__1": ${ client[0].name.last }
+      - "client_name_first__1": ${ client[0].name.first }
+      - "client_name_middle_initial__1": ${ client[0].name.middle_initial() }
+      - "client_address_city_state_zip": ${ client[0].address.zip }
+      - "client_address_address__1": ${ client[0].address.address }
+      - "client_address_city__1": ${ client[0].address.city }
+      - "client_address_state__1": ${ client[0].address.state } 
+      - "client_address_zip__1": ${ client[0].address.zip } 
+      - "client_address_address__2": ${ client[0].mailing_address.address }
+      - "client_address_city__2": ${ client[0].mailing_address.city }
+      - "client_address_state__2": ${ client[0].mailing_address.state } 
+      - "client_address_zip__2": ${ client[0].mailing_address.zip } 
+      - "client_birthdate_day__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='dd') }
+      - "client_birthdate_month__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='MM') }
+      - "client_birthdate_year__1": ${ format_date(client.birthdate.format('MM/dd/YYY'), format='yy') }
+      - "client_phone_number__1": ${ client[0].phone }
+      - "client_MR_number__1": ${ client_MR_number }
+      - "student_attorney_address_address__1": ${ studentattorney[0].address.address }
+      - "student_attorney_address_city__1": ${ studentattorney[0].address.city }
+      - "student_attorney_address_state__1": ${ studentattorney[0].address.state }
+      - "student_attorney_address_zip__1": ${ studentattorney[0].address.zip }
+      - "mailwho": ${ mailwho }
+      - "mailaddress": ${ mailaddress }
+      - "pathology_reports_description__1": ${ pathology_reports_description__1 }
+      - "clinic_notes_description__1": ${ clinic_notes_description__1 }
+      - "consultation_reports_description__1": ${ consultation_reports_description__1 } 
+      - "MRI_reports_description__1": ${ MRI_reports_description__1 } 
+      - "medication_records_description__1": ${ medication_records_description__1 } 
+      - "ED_records_description__1": ${ ED_records_description__1 }
+      - "other_information_description__1": ${ other_information_description__1 }
+      - "client_initial_HIV__1": ${ HIV_signature }
+      - "client_initial_STD__1": ${ STD_signature } 
+      - "client_initial_GeneticCounseling__1": ${ GeneticCounseling_signature } 
+      - "client_initial_SexAssault__1": ${ SexAssault_signature }
+      - "client_initial_DV__1": ${ DV_signature } 
+      - "client_initial_pyschiatric__1": ${ pyschiatric_signature } 
+      - "client_initial_SW__1": ${ SW_signature } 
+      - "client_initial_pyschologist__1": ${ pyschologist_signature } 
+      - "client_initial_pyschotherapy__1": ${ pyschotherapy_signature } 
+      - "client_initial_AlcoholDrugAbuse__1": ${ AlcoholDrugAbuse_signature }
+      - "Mail_to__1": ${ mail_to__1 }
+      - "pickup__1": ${ pickup__1 }
+      - "clinic_notes__1": ${ clinic_notes__1 }
+      - "pathology_reports__1": ${ pathology_reports__1 }
+      - "consultation_reports__1": ${ consultation_reports__1 }
+      - "medication_records__1": ${ medication_records__1 }
+      - "other_information__1": ${ other_information__1 }
+      - "MRI_reports__1": ${ MRI_reports__1 }
+      - "ED_records__1": ${ ED_records__1 }
+      - "paper_preference__1": ${ paper_preference__1 }
+      - "electronic_preference__1": ${ electronic_preference__1 }      
+      - "client_signature": ${ client[0].signature }      
+      - "parent_signature": ${ parent[0].signature }
+      - "Parent_Relationship": ${ parent_relationship }      
+      - "todays_date__2": ${ today(format='MM/dd/YYYY') }
+      - "todays_date__1": ${ today(format='MM/dd/YYYY') }
+      
 ---
 attachment:
   variable name: Notice_of_Appearance_and_Disclosure_attachment
