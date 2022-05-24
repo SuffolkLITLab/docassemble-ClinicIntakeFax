@@ -272,13 +272,6 @@ fields:
 terms:
   green words: |
     Green words are legal terms or a short way of referring to something that needs more explanation. The definition or explanation pops up when you tap the green words.
-right: |
-  % if user_has_saved_answers:
-  ${fa_icon("bell", color="primary", size="sm")}
-  Saved answers available!
-
-  ${action_button_html(url_action('load_answer'), icon="folder-open", label=word("View answers"), size="sm" )}
-  % endif
 ---
 #id: Student Attorney
 #question: |
