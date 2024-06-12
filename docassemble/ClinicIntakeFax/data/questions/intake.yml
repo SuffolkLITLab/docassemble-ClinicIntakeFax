@@ -20,11 +20,17 @@ objects:
 ---
 metadata:
   title: |
-    Suffolk Juvenile Defenders
+    Suffolk Juvenile Defenders Intake App
   short title: |
     HIPAA Intake App
+  description: |
+    This tool helps gather information for an intake for the Suffolk Juvenile Defenders
+    clinic.
   tags:
     - HE-00-00-00-00
+  LIST_codes:
+    - HE-00-00-00-00
+  unlisted: True
 ---
 code: |
   al_form_type = 'existing_case'
