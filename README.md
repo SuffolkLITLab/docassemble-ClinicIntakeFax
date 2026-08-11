@@ -1,8 +1,12 @@
 # docassemble.ClinicIntakeFax
 
+The project hasn't been using for several years (since 2022), and was the only
+interview that sent faxes from a service we were shutting down use to, so we're archiving
+the repo as well.
+
+
 testing link: 
 https://apps-test.suffolklitlab.org/run/ClinicFax
-
 
 
 ## Authors
